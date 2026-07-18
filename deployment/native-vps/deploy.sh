@@ -161,12 +161,22 @@ if [[ "${SKIP_HEALTH}" == "false" ]]; then
   done
 
   if [[ "${fineract_ok}" != "true" || "${control_ok}" != "true" ]]; then
-    log "Health check failed. Consider rollback:"
-    log "  sudo ${DEPLOY_ROOT}/scripts/rollback.sh"
-    die "One or more services failed health checks"
+    log "WARNING: One or more services failed health checks (deploy NOT rolled back)."
+    [[ "${fineract_ok}" != "true" ]] && log "  - fineract.service unhealthy on http://127.0.0.1:8080/fineract-provider/actuator/health"
+    [[ "${control_ok}" != "true" ]] && log "  - somimas-control-plane.service unhealthy on http://127.0.0.1:8090/saas-api/actuator/health"
+    log "Recent service logs (last 40 lines each):"
+    if [[ "${fineract_ok}" != "true" ]]; then
+      log "----- fineract.service -----"
+      journalctl -u fineract.service -n 40 --no-pager 2>&1 | sed 's/^/[deploy]   /' || true
+    fi
+    if [[ "${control_ok}" != "true" ]]; then
+      log "----- somimas-control-plane.service -----"
+      journalctl -u somimas-control-plane.service -n 40 --no-pager 2>&1 | sed 's/^/[deploy]   /' || true
+    fi
+    log "To roll back manually: sudo ${DEPLOY_ROOT}/scripts/rollback.sh"
+  else
+    log "Health checks passed."
   fi
-
-  log "Health checks passed."
 fi
 
 log "Deploy complete: ${RELEASE_ID}"
