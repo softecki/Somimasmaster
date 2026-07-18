@@ -1,0 +1,92 @@
+<div class="container m-b-20 layout-row layout-lt-md-column align-end gap-2percent">
+  <button mat-raised-button color="primary" [routerLink]="['edit']" *mifosxHasPermission="'UPDATE_TAXCOMPONENT'">
+    <fa-icon icon="edit" class="m-r-10"></fa-icon>
+    {{ 'labels.buttons.Edit' | translate }}
+  </button>
+</div>
+
+<div class="container">
+  <mat-card>
+    <mat-card-content>
+      <div class="layout-row-wrap">
+        <div class="flex-50 mat-body-strong">
+          {{ 'labels.inputs.Name' | translate }}
+        </div>
+
+        <div class="flex-50">
+          {{ taxComponentData.name }}
+        </div>
+
+        <div class="flex-50 mat-body-strong">
+          {{ 'labels.inputs.Percentage' | translate }}
+        </div>
+
+        <div class="flex-50">{{ taxComponentData.percentage | formatNumber }} %</div>
+
+        @if (taxComponentData.debitAccountType) {
+          <div class="flex-50 mat-body-strong">
+            {{ 'labels.inputs.Debit Account Type' | translate }}
+          </div>
+        }
+
+        @if (taxComponentData.debitAccountType) {
+          <div class="flex-50">
+            {{ taxComponentData.debitAccountType.value }}
+          </div>
+        }
+
+        @if (taxComponentData.debitAccount) {
+          <div class="flex-50 mat-body-strong">
+            {{ 'labels.inputs.Debit Account' | translate }}
+          </div>
+        }
+
+        @if (taxComponentData.debitAccount) {
+          <div class="flex-50">
+            ({{ 'labels.inputs.accounting.' + taxComponentData.debitAccount.glCode }})
+            {{ taxComponentData.debitAccount.name | translate }}
+          </div>
+        }
+
+        @if (taxComponentData.creditAccountType) {
+          <div class="flex-50 mat-body-strong">
+            {{ 'labels.inputs.Credit Account Type' | translate }}
+          </div>
+        }
+
+        @if (taxComponentData.creditAccountType) {
+          <div class="flex-50">
+            {{ taxComponentData.creditAccountType.value | translateKey: 'catalogs' }}
+          </div>
+        }
+
+        @if (taxComponentData.creditAccount) {
+          <div class="flex-50 mat-body-strong">
+            {{ 'labels.inputs.Credit Account' | translate }}
+          </div>
+        }
+
+        @if (taxComponentData.creditAccount) {
+          <div class="flex-50">
+            ({{ taxComponentData.creditAccount.glCode }})
+            {{ taxComponentData.creditAccount.name }}
+          </div>
+        }
+
+        <div class="flex-50 mat-body-strong">
+          {{ 'labels.inputs.Start Date' | translate }}
+        </div>
+
+        <div class="flex-50">
+          {{ taxComponentData.startDate | dateFormat }}
+        </div>
+      </div>
+    </mat-card-content>
+
+    <div class="layout-row layout-align-center gap-2percent layout-lt-md-column">
+      <button type="button" color="primary" mat-raised-button [routerLink]="['../']">
+        {{ 'labels.buttons.Back' | translate }}
+      </button>
+    </div>
+  </mat-card>
+</div>

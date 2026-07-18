@@ -1,0 +1,82 @@
+<!-- Basic Auth: Username/password form -->
+@if (!oauthEnabled) {
+  <div>
+    <form class="layout-column" [formGroup]="loginForm" (ngSubmit)="login()" id="login-form">
+      <mat-form-field class="login-input flex-align-center">
+        <span matPrefix class="m-r-10">
+          <fa-icon icon="user-circle" size="lg"></fa-icon>
+        </span>
+        <mat-label>{{ 'labels.inputs.Username' | translate }}</mat-label>
+        <input matInput type="text" autocomplete="off" formControlName="username" />
+        @if (loginForm.controls.username.hasError('required')) {
+          <mat-error>
+            {{ 'labels.inputs.Username' | translate }} <strong>{{ 'labels.commons.is required' | translate }}</strong>
+          </mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field class="login-input flex-align-center">
+        @if (!loginForm.controls.password.value) {
+          <span matPrefix class="m-r-10">
+            <fa-icon icon="lock" size="lg"></fa-icon>
+          </span>
+        }
+        <mat-label>{{ 'labels.inputs.Password' | translate }}</mat-label>
+        <input matInput type="{{ passwordInputType }}" formControlName="password" />
+        @if (loginForm.controls.password.value && !loading) {
+          <button
+            type="button"
+            matSuffix
+            mat-icon-button
+            (mousedown)="togglePasswordVisibility()"
+            (mouseup)="togglePasswordVisibility()"
+          >
+            @if (passwordInputType === 'password') {
+              <fa-icon icon="eye"></fa-icon>
+            }
+            @if (passwordInputType === 'text') {
+              <fa-icon icon="eye-slash"></fa-icon>
+            }
+          </button>
+        }
+        @if (loginForm.controls.password.hasError('required')) {
+          <mat-error>
+            {{ 'labels.inputs.Password' | translate }}
+            <strong>{{ 'labels.commons.pass is required' | translate }}</strong>
+          </mat-error>
+        }
+      </mat-form-field>
+      @if (loading) {
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      }
+      <button
+        mat-raised-button
+        color="primary"
+        class="login-button-first flex-align-center"
+        [disabled]="!loginForm.valid"
+      >
+        {{ 'labels.buttons.Login' | translate }}
+        @if (loading) {
+          <mat-spinner [diameter]="20"></mat-spinner>
+        }
+      </button>
+    </form>
+  </div>
+}
+
+<!-- OAuth/OIDC: Simple login button (no credentials needed) -->
+@if (oauthEnabled) {
+  <div class="layout-column">
+    <button
+      mat-raised-button
+      color="primary"
+      class="login-button-first flex-align-center"
+      (click)="loginOAuth()"
+      [disabled]="loading"
+    >
+      {{ 'labels.buttons.Login' | translate }}
+      @if (loading) {
+        <mat-spinner [diameter]="20"></mat-spinner>
+      }
+    </button>
+  </div>
+}

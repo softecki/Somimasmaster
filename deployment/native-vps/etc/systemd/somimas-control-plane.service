@@ -1,0 +1,39 @@
+[Unit]
+Description=Somimas SaaS Control Plane
+After=network-online.target mariadb.service fineract.service
+Wants=network-online.target
+Requires=mariadb.service
+
+[Service]
+Type=simple
+User=somimas
+Group=somimas
+WorkingDirectory=/opt/somimas/current
+
+EnvironmentFile=-/etc/somimas/control-plane.env
+EnvironmentFile=-/etc/somimas/control-plane.jvm.opts
+
+ExecStart=/bin/bash -lc 'exec /usr/bin/java ${JAVA_OPTS} -jar /opt/somimas/current/saas-control-plane.jar'
+
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=180
+TimeoutStopSec=60
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/somimas /var/log/somimas /opt/somimas
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+
+StandardOutput=append:/var/log/somimas/control-plane.log
+StandardError=append:/var/log/somimas/control-plane.log
+
+[Install]
+WantedBy=multi-user.target

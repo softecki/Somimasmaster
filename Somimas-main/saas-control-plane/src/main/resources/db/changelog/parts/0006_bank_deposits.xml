@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements. See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership. The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License. You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied. See the License for the
+  specific language governing permissions and limitations
+  under the License.
+-->
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="0006-cp-bank-account" author="somimas">
+        <createTable tableName="cp_bank_account">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="organization_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bank_name" type="VARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="account_number" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="cp_bank_account" baseColumnNames="organization_id"
+                                 referencedTableName="cp_organization" referencedColumnNames="id"
+                                 constraintName="fk_cp_bank_account_organization"/>
+    </changeSet>
+
+    <changeSet id="0006-cp-bank-deposit" author="somimas">
+        <createTable tableName="cp_bank_deposit">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="organization_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bank_account_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="DECIMAL(19,6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reference" type="VARCHAR(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="submitted_by" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="submitted_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata" type="TEXT"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="cp_bank_deposit" baseColumnNames="organization_id"
+                                 referencedTableName="cp_organization" referencedColumnNames="id"
+                                 constraintName="fk_cp_bank_deposit_organization"/>
+        <addForeignKeyConstraint baseTableName="cp_bank_deposit" baseColumnNames="bank_account_id"
+                                 referencedTableName="cp_bank_account" referencedColumnNames="id"
+                                 constraintName="fk_cp_bank_deposit_bank_account"/>
+        <addForeignKeyConstraint baseTableName="cp_bank_deposit" baseColumnNames="submitted_by"
+                                 referencedTableName="cp_identity" referencedColumnNames="id"
+                                 constraintName="fk_cp_bank_deposit_submitted_by"/>
+    </changeSet>
+
+    <changeSet id="0006-cp-bank-deposit-review" author="somimas">
+        <createTable tableName="cp_bank_deposit_review">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="deposit_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reviewer_identity_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="decision" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="notes" type="VARCHAR(1024)"/>
+            <column name="reviewed_at" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="cp_bank_deposit_review" baseColumnNames="deposit_id"
+                                 referencedTableName="cp_bank_deposit" referencedColumnNames="id"
+                                 constraintName="fk_cp_bank_deposit_review_deposit"/>
+        <addForeignKeyConstraint baseTableName="cp_bank_deposit_review" baseColumnNames="reviewer_identity_id"
+                                 referencedTableName="cp_identity" referencedColumnNames="id"
+                                 constraintName="fk_cp_bank_deposit_review_reviewer"/>
+    </changeSet>
+
+</databaseChangeLog>

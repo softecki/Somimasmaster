@@ -1,0 +1,6 @@
+# /etc/cron.d/somimas-backup
+# Nightly logical backup at 02:15 UTC. Logs to /var/log/somimas/backup.log
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+15 2 * * * root /opt/somimas/scripts/backup.sh >> /var/log/somimas/backup.log 2>&1

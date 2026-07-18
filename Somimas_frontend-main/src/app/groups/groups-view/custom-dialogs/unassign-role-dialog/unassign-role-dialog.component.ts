@@ -1,0 +1,33 @@
+/** Angular Imports */
+import { Component, inject } from '@angular/core';
+import {
+  MatDialogRef,
+  MAT_DIALOG_DATA,
+  MatDialogTitle,
+  MatDialogContent,
+  MatDialogActions,
+  MatDialogClose
+} from '@angular/material/dialog';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { STANDALONE_SHARED_IMPORTS } from 'app/standalone-shared.module';
+
+/**
+ * Unassign role dialog component.
+ */
+@Component({
+  selector: 'mifosx-unassign-role-dialog',
+  templateUrl: './unassign-role-dialog.component.html',
+  styleUrls: ['./unassign-role-dialog.component.scss'],
+  imports: [
+    ...STANDALONE_SHARED_IMPORTS,
+    MatDialogTitle,
+    CdkScrollable,
+    MatDialogContent,
+    MatDialogActions,
+    MatDialogClose
+  ]
+})
+export class UnassignRoleDialogComponent {
+  dialogRef = inject<MatDialogRef<UnassignRoleDialogComponent>>(MatDialogRef);
+  data = inject(MAT_DIALOG_DATA);
+}

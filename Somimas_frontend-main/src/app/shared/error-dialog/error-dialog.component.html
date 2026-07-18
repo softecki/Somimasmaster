@@ -1,0 +1,14 @@
+<h1 mat-dialog-title>{{ 'Error Log' | translate }}</h1>
+
+<div mat-dialog-content>
+  @if (!showAsCode) {
+    <p>{{ displayData }}</p>
+  }
+  @if (showAsCode) {
+    <span [innerHTML]="sanitizedData"></span>
+  }
+</div>
+
+<mat-dialog-actions align="left">
+  <button mat-raised-button mat-dialog-close>{{ 'Cancel' | translate }}</button>
+</mat-dialog-actions>

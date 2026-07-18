@@ -1,0 +1,26 @@
+/var/log/somimas/*.log {
+    daily
+    rotate 14
+    missingok
+    notifempty
+    compress
+    delaycompress
+    sharedscripts
+    create 0640 somimas somimas
+    postrotate
+        systemctl reload fineract.service somimas-control-plane.service >/dev/null 2>&1 || true
+    endscript
+}
+
+/var/log/nginx/somimas-*.log {
+    daily
+    rotate 14
+    missingok
+    notifempty
+    compress
+    delaycompress
+    sharedscripts
+    postrotate
+        [ -s /run/nginx.pid ] && kill -USR1 $(cat /run/nginx.pid) || true
+    endscript
+}

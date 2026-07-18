@@ -1,0 +1,16 @@
+<div>
+  @if (multiRowDatatableFlag) {
+    <mifosx-datatable-multi-row
+      [entityType]="entityType"
+      [entityId]="entityId"
+      [dataObject]="entityDatatable"
+    ></mifosx-datatable-multi-row>
+  }
+  @if (!multiRowDatatableFlag) {
+    <mifosx-datatable-single-row
+      [entityType]="entityType"
+      [entityId]="entityId"
+      [dataObject]="entityDatatable"
+    ></mifosx-datatable-single-row>
+  }
+</div>

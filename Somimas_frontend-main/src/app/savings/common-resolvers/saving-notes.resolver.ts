@@ -1,0 +1,20 @@
+import { Injectable, inject } from '@angular/core';
+import { ActivatedRouteSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+import { SavingsService } from '../savings.service';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class SavingNotesResolver {
+  private savingsService = inject(SavingsService);
+
+  /**
+   * Returns the Savings data.
+   * @returns {Observable<any>}
+   */
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
+    const savingAccountId = route.parent.paramMap.get('savingAccountId');
+    return this.savingsService.getSavingsNotes(savingAccountId);
+  }
+}

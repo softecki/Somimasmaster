@@ -1,0 +1,42 @@
+[Unit]
+Description=Apache Fineract Provider (Somimas)
+Documentation=https://fineract.apache.org/
+After=network-online.target mariadb.service
+Wants=network-online.target
+Requires=mariadb.service
+
+[Service]
+Type=simple
+User=somimas
+Group=somimas
+WorkingDirectory=/opt/somimas/current
+
+EnvironmentFile=-/etc/somimas/fineract.env
+EnvironmentFile=-/etc/somimas/fineract.jvm.opts
+
+# Resolve jar from current release symlink
+ExecStart=/bin/bash -lc 'exec /usr/bin/java ${JAVA_OPTS} -jar /opt/somimas/current/fineract-provider.jar'
+
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=300
+TimeoutStopSec=120
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/somimas /var/log/somimas /opt/somimas
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+
+StandardOutput=append:/var/log/somimas/fineract.log
+StandardError=append:/var/log/somimas/fineract.log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,26 @@
+/** Angular Imports */
+import { Injectable, inject } from '@angular/core';
+import { ActivatedRouteSnapshot } from '@angular/router';
+
+/** rxjs Imports */
+import { Observable } from 'rxjs';
+
+/** Custom Services */
+import { SystemService } from '../system.service';
+
+/**
+ * Code data resolver.
+ */
+@Injectable()
+export class CodeResolver {
+  private systemService = inject(SystemService);
+
+  /**
+   * Returns the Code data.
+   * @returns {Observable<any>}
+   */
+  resolve(route: ActivatedRouteSnapshot): Observable<any> {
+    const id = route.paramMap.get('id');
+    return this.systemService.getCode(id);
+  }
+}

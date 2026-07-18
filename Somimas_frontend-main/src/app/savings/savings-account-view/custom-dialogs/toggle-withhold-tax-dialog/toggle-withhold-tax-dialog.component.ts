@@ -1,0 +1,33 @@
+/** Angular Imports */
+import { Component, inject } from '@angular/core';
+import {
+  MatDialogRef,
+  MAT_DIALOG_DATA,
+  MatDialogTitle,
+  MatDialogContent,
+  MatDialogActions,
+  MatDialogClose
+} from '@angular/material/dialog';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { STANDALONE_SHARED_IMPORTS } from 'app/standalone-shared.module';
+
+/**
+ * Toggle withhold tax dialog dialog component.
+ */
+@Component({
+  selector: 'mifosx-toggle-withhold-tax-dialog',
+  templateUrl: './toggle-withhold-tax-dialog.component.html',
+  styleUrls: ['./toggle-withhold-tax-dialog.component.scss'],
+  imports: [
+    ...STANDALONE_SHARED_IMPORTS,
+    MatDialogTitle,
+    CdkScrollable,
+    MatDialogContent,
+    MatDialogActions,
+    MatDialogClose
+  ]
+})
+export class ToggleWithholdTaxDialogComponent {
+  dialogRef = inject<MatDialogRef<ToggleWithholdTaxDialogComponent>>(MatDialogRef);
+  data = inject(MAT_DIALOG_DATA);
+}
