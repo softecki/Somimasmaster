@@ -29,12 +29,19 @@ log "Installing repository prerequisites..."
 apt-get install -y --no-install-recommends \
   ca-certificates curl gnupg lsb-release apt-transport-https
 
+# Extract the server version from `mariadb --version`, which varies by build:
+#   "mariadb  Ver 15.1 Distrib 11.5.2-MariaDB, ..."
+#   "mariadb from 11.8.8-MariaDB, client 15.2 for debian-linux-gnu ..."
+mariadb_version() {
+  mariadb --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+-MariaDB' | head -1 | sed 's/-MariaDB//'
+}
+
 # Ubuntu 24.04's default MariaDB is older than Fineract's supported 11.5.2+
 # baseline. Install the MariaDB 11.8 LTS repository before installing server
 # packages.
 CURRENT_MARIADB_VERSION=""
 if command -v mariadb >/dev/null 2>&1; then
-  CURRENT_MARIADB_VERSION="$(mariadb --version | sed -n 's/.*Distrib \([0-9][0-9.]*\).*/\1/p')"
+  CURRENT_MARIADB_VERSION="$(mariadb_version)"
 fi
 if [[ -z "${CURRENT_MARIADB_VERSION}" ]] || \
    [[ "$(printf '%s\n' "11.5.2" "${CURRENT_MARIADB_VERSION}" | sort -V | head -1)" != "11.5.2" ]]; then
@@ -62,10 +69,15 @@ fi
 java -version 2>&1 | head -1 | grep -q '21\.' || die "Java 21 not available after install"
 
 # Verify MariaDB version >= 11.5.2
-MARIADB_VER="$(mariadb --version | sed -n 's/.*Distrib \([0-9][0-9.]*\).*/\1/p')"
-log "MariaDB version: ${MARIADB_VER}"
-[[ "$(printf '%s\n' "11.5.2" "${MARIADB_VER}" | sort -V | head -1)" == "11.5.2" ]] || \
-  die "MariaDB ${MARIADB_VER} is unsupported; install MariaDB 11.5.2 or newer"
+MARIADB_VER="$(mariadb_version)"
+if [[ -z "${MARIADB_VER}" ]]; then
+  log "WARNING: could not parse MariaDB version from: $(mariadb --version 2>/dev/null)"
+  log "         Continuing; verify manually that the server is 11.5.2 or newer."
+else
+  log "MariaDB version: ${MARIADB_VER}"
+  [[ "$(printf '%s\n' "11.5.2" "${MARIADB_VER}" | sort -V | head -1)" == "11.5.2" ]] || \
+    die "MariaDB ${MARIADB_VER} is unsupported; install MariaDB 11.5.2 or newer"
+fi
 
 log "Creating system user and directory layout..."
 if ! id somimas &>/dev/null; then
