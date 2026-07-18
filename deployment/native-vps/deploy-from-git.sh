@@ -55,6 +55,24 @@ else
   GRADLE=("${GRADLE_HOME}/bin/gradle")
 fi
 
+# JAVA_HOME must be the JDK root (…/java-21-openjdk-amd64), never …/bin/java
+if [[ -z "${JAVA_HOME:-}" ]] || [[ ! -x "${JAVA_HOME}/bin/java" ]]; then
+  if [[ -x /usr/lib/jvm/java-21-openjdk-amd64/bin/java ]]; then
+    export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+  elif command -v java >/dev/null 2>&1; then
+    JAVA_BIN="$(readlink -f "$(command -v java)")"
+    export JAVA_HOME="$(dirname "$(dirname "${JAVA_BIN}")")"
+  fi
+fi
+if [[ -n "${JAVA_HOME:-}" && -x "${JAVA_HOME}/bin/java" ]]; then
+  export PATH="${JAVA_HOME}/bin:${PATH}"
+  echo "[build] Using JAVA_HOME=${JAVA_HOME}"
+else
+  echo "JAVA_HOME is invalid. Set it to the JDK root, e.g.:" >&2
+  echo "  export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64" >&2
+  exit 1
+fi
+
 echo "[build] Building Fineract (including the Somimas SaaS starter) and control plane..."
 (
   cd "${BACKEND_DIR}"

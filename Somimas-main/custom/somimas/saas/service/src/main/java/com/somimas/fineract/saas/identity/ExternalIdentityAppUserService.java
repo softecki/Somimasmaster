@@ -55,6 +55,6 @@ public class ExternalIdentityAppUserService {
         if (routingDataSourceServiceFactory == null) {
             throw new IllegalStateException("RoutingDataSourceServiceFactory is unavailable; cannot resolve tenant datasource");
         }
-        return routingDataSourceServiceFactory.determineDataSourceService().getDataSource();
+        return routingDataSourceServiceFactory.determineDataSourceService().retrieveDataSource();
     }
 }

@@ -18,6 +18,7 @@
  */
 package com.somimas.fineract.saas.provisioning;
 
+import com.somimas.fineract.saas.access.TenantAccessPolicy;
 import javax.sql.DataSource;
 import org.apache.fineract.infrastructure.core.service.tenant.JdbcTenantDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
