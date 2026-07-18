@@ -4,6 +4,8 @@ Documentation=https://fineract.apache.org/
 After=network-online.target mariadb.service
 Wants=network-online.target
 Requires=mariadb.service
+StartLimitIntervalSec=600
+StartLimitBurst=5
 
 [Service]
 Type=simple
@@ -19,7 +21,7 @@ ExecStart=/bin/bash -lc 'exec /usr/bin/java ${JAVA_OPTS} -jar /opt/somimas/curre
 
 SuccessExitStatus=143
 Restart=on-failure
-RestartSec=10
+RestartSec=15
 TimeoutStartSec=300
 TimeoutStopSec=120
 

@@ -164,14 +164,24 @@ if [[ "${SKIP_HEALTH}" == "false" ]]; then
     log "WARNING: One or more services failed health checks (deploy NOT rolled back)."
     [[ "${fineract_ok}" != "true" ]] && log "  - fineract.service unhealthy on http://127.0.0.1:8080/fineract-provider/actuator/health"
     [[ "${control_ok}" != "true" ]] && log "  - somimas-control-plane.service unhealthy on http://127.0.0.1:8090/saas-api/actuator/health"
-    log "Recent service logs (last 40 lines each):"
+    log "Recent service logs:"
     if [[ "${fineract_ok}" != "true" ]]; then
-      log "----- fineract.service -----"
-      journalctl -u fineract.service -n 40 --no-pager 2>&1 | sed 's/^/[deploy]   /' || true
+      log "----- fineract.service (systemd) -----"
+      journalctl -u fineract.service -n 20 --no-pager 2>&1 | sed 's/^/[deploy]   /' || true
+      if [[ -f /var/log/somimas/fineract.log ]]; then
+        log "----- /var/log/somimas/fineract.log (last 80 lines) -----"
+        tail -n 80 /var/log/somimas/fineract.log 2>&1 | sed 's/^/[deploy]   /' || true
+      else
+        log "  (missing /var/log/somimas/fineract.log — check permissions /var/log/somimas)"
+      fi
     fi
     if [[ "${control_ok}" != "true" ]]; then
-      log "----- somimas-control-plane.service -----"
-      journalctl -u somimas-control-plane.service -n 40 --no-pager 2>&1 | sed 's/^/[deploy]   /' || true
+      log "----- somimas-control-plane.service (systemd) -----"
+      journalctl -u somimas-control-plane.service -n 20 --no-pager 2>&1 | sed 's/^/[deploy]   /' || true
+      if [[ -f /var/log/somimas/control-plane.log ]]; then
+        log "----- /var/log/somimas/control-plane.log (last 80 lines) -----"
+        tail -n 80 /var/log/somimas/control-plane.log 2>&1 | sed 's/^/[deploy]   /' || true
+      fi
     fi
     log "To roll back manually: sudo ${DEPLOY_ROOT}/scripts/rollback.sh"
   else
