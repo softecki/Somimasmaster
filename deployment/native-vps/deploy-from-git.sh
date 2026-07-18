@@ -73,10 +73,19 @@ else
   exit 1
 fi
 
-echo "[build] Building Fineract (including the Somimas SaaS starter) and control plane..."
+# The repo's gradle.properties requests -Xmx12g, which OOM-kills the daemon on
+# small VPSes. Override with a modest heap (tunable via GRADLE_XMX) while
+# keeping the module flags the Fineract build needs to compile.
+GRADLE_XMX="${GRADLE_XMX:-2g}"
+GRADLE_JVMARGS="-Xmx${GRADLE_XMX} -XX:MaxMetaspaceSize=512m --add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.security=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.management/javax.management=ALL-UNNAMED --add-opens=java.naming/javax.naming=ALL-UNNAMED --add-opens=java.rmi/sun.rmi.transport=null"
+
+echo "[build] Building Fineract (including the Somimas SaaS starter) and control plane (heap ${GRADLE_XMX})..."
 (
   cd "${BACKEND_DIR}"
-  "${GRADLE[@]}" --no-daemon :fineract-provider:bootJar :saas-control-plane:bootJar
+  "${GRADLE[@]}" --no-daemon --max-workers=2 \
+    -Dorg.gradle.jvmargs="${GRADLE_JVMARGS}" \
+    -Dorg.gradle.parallel=false \
+    :fineract-provider:bootJar :saas-control-plane:bootJar
 )
 
 echo "[build] Building Angular production frontend..."
