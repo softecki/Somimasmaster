@@ -5,7 +5,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DOMAIN="${APP_DOMAIN:-microfinance.softecki.com}"
-ADMIN_EMAIL="${ADMIN_EMAIL:-admin@softecki.com}"
+ADMIN_EMAIL="${ADMIN_EMAIL:-filbertnyakunga@softecki.co.tz}"
 SITE="/etc/nginx/sites-available/somimas.conf"
 TEMPLATE="${NGINX_TEMPLATE:-${SCRIPT_DIR}/etc/nginx/sites-available/somimas.conf}"
 if [[ ! -f "${TEMPLATE}" ]]; then

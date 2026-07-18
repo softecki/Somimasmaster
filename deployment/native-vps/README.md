@@ -124,7 +124,7 @@ cd /tmp/Somimas-main   # or upload source
 
 ```bash
 sudo APP_DOMAIN=microfinance.softecki.com \
-  ADMIN_EMAIL=admin@softecki.com \
+  ADMIN_EMAIL=filbertnyakunga@softecki.co.tz \
   /opt/somimas/scripts/configure-nginx.sh
 sudo certbot renew --dry-run
 ```
