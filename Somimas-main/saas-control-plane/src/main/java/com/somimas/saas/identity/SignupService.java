@@ -26,12 +26,15 @@ import com.somimas.saas.organization.Organization;
 import com.somimas.saas.organization.OrganizationMembership;
 import com.somimas.saas.organization.OrganizationMembershipRepository;
 import com.somimas.saas.organization.OrganizationRepository;
+import com.somimas.saas.provisioning.ProvisioningCredential;
+import com.somimas.saas.provisioning.ProvisioningCredentialRepository;
 import com.somimas.saas.provisioning.ProvisioningService;
 import com.somimas.saas.web.ApiException;
 import com.somimas.saas.web.dto.request.SignupRequest;
 import com.somimas.saas.web.dto.response.SignupResponse;
 import java.time.LocalDateTime;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,20 +48,24 @@ public class SignupService {
     private final PlanRepository planRepository;
     private final SubscriptionService subscriptionService;
     private final ProvisioningService provisioningService;
+    private final ProvisioningCredentialRepository provisioningCredentialRepository;
     private final PasswordEncoder passwordEncoder;
     private final SlugValidator slugValidator;
     private final AuditService auditService;
+    private final PasswordEncoder fineractPasswordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
 
     public SignupService(IdentityRepository identityRepository, OrganizationRepository organizationRepository,
             OrganizationMembershipRepository membershipRepository, PlanRepository planRepository,
             SubscriptionService subscriptionService, ProvisioningService provisioningService,
-            PasswordEncoder passwordEncoder, SlugValidator slugValidator, AuditService auditService) {
+            ProvisioningCredentialRepository provisioningCredentialRepository, PasswordEncoder passwordEncoder,
+            SlugValidator slugValidator, AuditService auditService) {
         this.identityRepository = identityRepository;
         this.organizationRepository = organizationRepository;
         this.membershipRepository = membershipRepository;
         this.planRepository = planRepository;
         this.subscriptionService = subscriptionService;
         this.provisioningService = provisioningService;
+        this.provisioningCredentialRepository = provisioningCredentialRepository;
         this.passwordEncoder = passwordEncoder;
         this.slugValidator = slugValidator;
         this.auditService = auditService;
@@ -67,14 +74,15 @@ public class SignupService {
     @Transactional
     public SignupResponse signup(SignupRequest request) {
         String email = request.email().trim().toLowerCase();
-        String slug = request.slug().trim().toLowerCase();
-        slugValidator.validate(slug);
+        String firstName = request.firstName().trim();
+        String lastName = request.lastName().trim();
+        String organizationName = request.organizationName().trim();
+        String slug = slugValidator.generateUniqueSlug(organizationName);
+
         if (identityRepository.findByEmail(email).isPresent()) {
             throw new ApiException(HttpStatus.CONFLICT, "Email already registered");
         }
-        if (organizationRepository.findBySlug(slug).isPresent()) {
-            throw new ApiException(HttpStatus.CONFLICT, "Organization slug already taken");
-        }
+
         LocalDateTime now = LocalDateTime.now();
         Identity identity = new Identity();
         identity.setEmail(email);
@@ -86,7 +94,7 @@ public class SignupService {
 
         Organization organization = new Organization();
         organization.setSlug(slug);
-        organization.setName(request.organizationName().trim());
+        organization.setName(organizationName);
         organization.setStatus("PENDING");
         organization.setCreatedAt(now);
         organization.setUpdatedAt(now);
@@ -98,6 +106,17 @@ public class SignupService {
         membership.setRole("OWNER");
         membership.setCreatedAt(now);
         membershipRepository.save(membership);
+
+        ProvisioningCredential credential = new ProvisioningCredential();
+        credential.setOrganizationId(organization.getId());
+        credential.setAdminUsername(email);
+        credential.setAdminEmail(email);
+        credential.setFirstName(firstName);
+        credential.setLastName(lastName);
+        // Fineract DelegatingPasswordEncoder-compatible hash; never logged or returned.
+        credential.setPasswordHash(fineractPasswordEncoder.encode(request.password()));
+        credential.setCreatedAt(now);
+        provisioningCredentialRepository.save(credential);
 
         Plan starterPlan = planRepository.findByCode("starter")
                 .orElseThrow(() -> new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Starter plan not configured"));

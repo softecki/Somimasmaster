@@ -56,6 +56,24 @@ public class FineractProvisioningClient {
                 .body(BridgeProvisioningResult.class);
     }
 
+    public BridgeAdminSeedResult seedAdmin(String identifier, String username, String email, String firstName, String lastName,
+            String passwordHash) {
+        String url = somimasProperties.getFineract().getBridgeUrl() + "/internal/saas/tenants/" + identifier + "/admin";
+        Map<String, String> body = Map.of(
+                "username", username,
+                "email", email,
+                "firstName", firstName,
+                "lastName", lastName,
+                "passwordHash", passwordHash);
+        return restClient.post()
+                .uri(url)
+                .header("X-Somimas-Bridge-Token", somimasProperties.getFineract().getBridgeToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .body(BridgeAdminSeedResult.class);
+    }
+
     public void updateAccessState(String identifier, String accessState) {
         String url = somimasProperties.getFineract().getBridgeUrl() + "/internal/saas/tenants/" + identifier + "/access-state";
         restClient.post()
@@ -69,4 +87,6 @@ public class FineractProvisioningClient {
 
     public record BridgeProvisioningResult(String identifier, String status, String databaseName, Long tenantId,
             String message) {}
+
+    public record BridgeAdminSeedResult(String identifier, String status, Long appUserId, String message) {}
 }

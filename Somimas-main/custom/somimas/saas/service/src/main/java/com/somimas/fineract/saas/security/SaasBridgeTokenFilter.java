@@ -24,6 +24,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
@@ -41,7 +43,14 @@ public class SaasBridgeTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
+        String path = request.getServletPath();
+        if (!StringUtils.hasText(path)) {
+            path = request.getRequestURI();
+            String contextPath = request.getContextPath();
+            if (StringUtils.hasText(contextPath) && path != null && path.startsWith(contextPath)) {
+                path = path.substring(contextPath.length());
+            }
+        }
         return path == null || !path.startsWith("/internal/saas/");
     }
 
@@ -55,11 +64,20 @@ public class SaasBridgeTokenFilter extends OncePerRequestFilter {
         }
 
         String providedToken = request.getHeader(BRIDGE_TOKEN_HEADER);
-        if (!configuredToken.equals(providedToken)) {
+        if (!constantTimeEquals(configuredToken, providedToken)) {
             response.sendError(HttpStatus.UNAUTHORIZED.value(), "Invalid or missing X-Somimas-Bridge-Token");
             return;
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private static boolean constantTimeEquals(String expected, String actual) {
+        if (actual == null) {
+            return false;
+        }
+        byte[] a = expected.getBytes(StandardCharsets.UTF_8);
+        byte[] b = actual.getBytes(StandardCharsets.UTF_8);
+        return MessageDigest.isEqual(a, b);
     }
 }

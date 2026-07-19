@@ -19,6 +19,8 @@
 package com.somimas.fineract.saas.provisioning;
 
 import com.somimas.fineract.saas.provisioning.dto.AccessStateRequest;
+import com.somimas.fineract.saas.provisioning.dto.AdminSeedRequest;
+import com.somimas.fineract.saas.provisioning.dto.AdminSeedResult;
 import com.somimas.fineract.saas.provisioning.dto.TenantProvisioningRequest;
 import com.somimas.fineract.saas.provisioning.dto.TenantProvisioningResult;
 import java.util.Map;
@@ -41,6 +43,7 @@ public class TenantProvisioningApiResource {
 
     private final TenantProvisioningService tenantProvisioningService;
     private final TenantAccessStateService tenantAccessStateService;
+    private final TenantAdminSeedService tenantAdminSeedService;
 
     @PostMapping
     public ResponseEntity<TenantProvisioningResult> createTenant(@RequestBody TenantProvisioningRequest request) {
@@ -56,6 +59,18 @@ public class TenantProvisioningApiResource {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(result);
         }
         return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/{identifier}/admin")
+    public ResponseEntity<AdminSeedResult> seedAdmin(@PathVariable("identifier") String identifier,
+            @RequestBody AdminSeedRequest request) {
+        AdminSeedResult result = tenantAdminSeedService.seedAdmin(identifier, request);
+        HttpStatus status = switch (result.getStatus()) {
+            case FAILED -> HttpStatus.BAD_REQUEST;
+            case EXISTS -> HttpStatus.OK;
+            case CREATED -> HttpStatus.CREATED;
+        };
+        return ResponseEntity.status(status).body(result);
     }
 
     @PostMapping("/{identifier}/access-state")

@@ -20,6 +20,7 @@ package com.somimas.saas.identity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,12 +33,15 @@ import com.somimas.saas.billing.SubscriptionService;
 import com.somimas.saas.organization.Organization;
 import com.somimas.saas.organization.OrganizationMembershipRepository;
 import com.somimas.saas.organization.OrganizationRepository;
+import com.somimas.saas.provisioning.ProvisioningCredential;
+import com.somimas.saas.provisioning.ProvisioningCredentialRepository;
 import com.somimas.saas.provisioning.ProvisioningService;
 import com.somimas.saas.web.dto.request.SignupRequest;
 import com.somimas.saas.web.dto.response.SignupResponse;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -59,6 +63,8 @@ class SignupServiceTest {
     @Mock
     private ProvisioningService provisioningService;
     @Mock
+    private ProvisioningCredentialRepository provisioningCredentialRepository;
+    @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
     private SlugValidator slugValidator;
@@ -69,10 +75,10 @@ class SignupServiceTest {
     private SignupService signupService;
 
     @Test
-    void signupCreatesIdentityOrgMembershipTrialAndProvisioningJob() {
-        SignupRequest request = new SignupRequest("owner@example.com", "password123", "Acme MFI", "acme-mfi");
+    void signupCreatesIdentityOrgMembershipTrialCredentialAndProvisioningJob() {
+        SignupRequest request = new SignupRequest("owner@example.com", "password123", "Ada", "Lovelace", "Acme MFI");
+        when(slugValidator.generateUniqueSlug("Acme MFI")).thenReturn("acme-mfi");
         when(identityRepository.findByEmail("owner@example.com")).thenReturn(Optional.empty());
-        when(organizationRepository.findBySlug("acme-mfi")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("password123")).thenReturn("hash");
 
         Identity savedIdentity = new Identity();
@@ -94,6 +100,7 @@ class SignupServiceTest {
         subscription.setId(200L);
         when(subscriptionService.createTrialSubscription(10L, 100L)).thenReturn(subscription);
         when(provisioningService.createPendingJob(10L)).thenReturn(500L);
+        when(provisioningCredentialRepository.save(any(ProvisioningCredential.class))).thenAnswer(inv -> inv.getArgument(0));
 
         SignupResponse response = signupService.signup(request);
 
@@ -101,6 +108,12 @@ class SignupServiceTest {
         assertEquals(500L, response.jobId());
         assertEquals("acme-mfi", response.slug());
         verify(membershipRepository).save(any());
+        ArgumentCaptor<ProvisioningCredential> credentialCaptor = ArgumentCaptor.forClass(ProvisioningCredential.class);
+        verify(provisioningCredentialRepository).save(credentialCaptor.capture());
+        ProvisioningCredential credential = credentialCaptor.getValue();
+        assertEquals("owner@example.com", credential.getAdminUsername());
+        assertEquals("Ada", credential.getFirstName());
+        assertTrue(credential.getPasswordHash().startsWith("{bcrypt}"));
         verify(auditService).record(1L, 10L, "organization.signup", "organization", 10L, "{\"slug\":\"acme-mfi\"}");
         assertNotNull(response);
     }

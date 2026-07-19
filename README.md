@@ -84,6 +84,8 @@ The detailed VPS runbook is also available at [deployment/native-vps/README.md](
 - Standard Fineract/Mifos microfinance operations.
 - Multitenant database isolation.
 - SaaS registration and organization lifecycle.
+- Automatic tenant slug generation and dedicated Fineract database provisioning.
+- Owner administrator seeding so the registration email/password can log into the new tenant.
 - Trial and subscription configuration.
 - Tenant provisioning through an internal authenticated bridge.
 - Tenant access states such as `ACTIVE` and `SUSPENDED`.
@@ -132,9 +134,21 @@ Protected by `X-Somimas-Bridge-Token` and blocked from the public internet by Ng
 |---|---|---|
 | `POST` | `/internal/saas/tenants` | Provision a tenant DB and register it |
 | `GET` | `/internal/saas/tenants/status/{identifier}` | Provisioning status |
+| `POST` | `/internal/saas/tenants/{identifier}/admin` | Seed the organization owner as a Fineract admin |
 | `POST` | `/internal/saas/tenants/{identifier}/access-state` | Set `ACTIVE` or `SUSPENDED` |
 
-Provisioning creates `somimas_<slug>`, a tenant DB user, a Fineract registry row, encrypted credentials, and Liquibase migrations. Suspended tenants are denied operational API access by the bridge filter.
+Provisioning creates `somimas_<slug>`, a tenant DB user, a Fineract registry row, encrypted credentials, Liquibase migrations, and an owner `m_appuser` (email as username) using a Fineract-compatible password hash derived at signup. Suspended tenants are denied operational API access by the bridge filter.
+
+### Organization registration lifecycle
+
+1. User opens `/#/login` and clicks **Register your organization**, or goes to `/#/saas/signup`.
+2. Signup collects first name, last name, email, password, and organization name. The control plane generates a unique tenant slug from the organization name (no client-supplied slug).
+3. The control plane creates the SaaS identity, organization, trial subscription, provisioning job, and an ephemeral Fineract-compatible password hash.
+4. The provisioning worker calls the Fineract bridge to create the tenant database, run Liquibase, and seed the owner administrator.
+5. The provisioning UI shows step progress. When complete, **Continue to tenant login** selects the new tenant and opens `/#/login`.
+6. The owner signs in with their **email** as the Fineract username and the **same registration password**.
+
+SaaS Cloud login (`/#/saas/login`) and Fineract tenant login (`/#/login`) remain separate sessions. Selecting an organization only sets the tenant identifier; it does not create a Fineract session.
 
 ### Frontend SaaS routes (hash routing)
 
@@ -772,14 +786,14 @@ sudo nginx -t
 
 ### Current product limitations
 
-- SaaS control-plane identities and Fineract operational users are separate authentication domains.
-- Automatic seeding of a Fineract tenant administrator during SaaS signup is not complete; operators still use the Fineract/Mifos login for core banking work after a tenant exists.
+- SaaS control-plane identities and Fineract operational users remain separate sessions (shared password is intentional; there is no SSO token bridge yet).
+- Every new tenant Liquibase run still seeds the default `mifos` / `password` superuser. This implementation intentionally leaves that account enabled per product decision — treat it as a production risk and rotate or disable it before going live.
 - Entitlement enforcement currently defaults to report-only mode and uses a small hard-coded route allowlist.
-- Frontend organization/billing/provisioning pages do not yet use strong route guards; platform admin performs a component-level role check.
 - Flutterwave checkout currently constructs a hosted URL locally and does not fully create or verify checkout sessions through Flutterwave's API until that integration is finished.
 - Payment webhook matching is intentionally conservative and should be hardened further before high-volume billing.
 - An application rollback does not undo database migrations.
 - Current SaaS provisioning SQL assumes MariaDB; PostgreSQL is not the production target for the bridge.
+- Existing SaaS owners still cannot create a second organization through the signup form (email uniqueness); that remains a follow-up.
 
 ## Verification
 

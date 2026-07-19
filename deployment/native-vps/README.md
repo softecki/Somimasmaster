@@ -226,6 +226,18 @@ Notes:
   dependency/lockfile or systemd/Nginx template changes.
 - Rollback and atomic release switching work the same for all three scripts.
 
+### Organization registration (tenant onboarding)
+
+1. Open `https://microfinance.softecki.com/#/login` and choose **Register your organization**.
+2. Submit owner name, email, password, and organization name.
+3. Wait on the provisioning page until status is `COMPLETED`.
+4. Click **Continue to tenant login** and sign in with the registration email and password.
+5. The tenant selector should already show the generated organization slug.
+
+If provisioning fails, check `/var/log/somimas/control-plane.log` and
+`/var/log/somimas/fineract.log`. The SEED_ADMIN step requires the Fineract bridge
+endpoint `POST /internal/saas/tenants/{slug}/admin` to succeed.
+
 ---
 
 ## 4. Rollback

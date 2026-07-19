@@ -20,6 +20,7 @@ package com.somimas.saas.provisioning;
 
 import com.somimas.saas.organization.Organization;
 import com.somimas.saas.organization.OrganizationRepository;
+import com.somimas.saas.provisioning.FineractProvisioningClient.BridgeAdminSeedResult;
 import com.somimas.saas.provisioning.FineractProvisioningClient.BridgeProvisioningResult;
 import java.util.List;
 import org.slf4j.Logger;
@@ -37,15 +38,18 @@ public class ProvisioningWorker {
     private final ProvisioningStepRepository stepRepository;
     private final ProvisioningService provisioningService;
     private final OrganizationRepository organizationRepository;
+    private final ProvisioningCredentialRepository provisioningCredentialRepository;
     private final FineractProvisioningClient fineractProvisioningClient;
 
     public ProvisioningWorker(ProvisioningJobRepository jobRepository, ProvisioningStepRepository stepRepository,
             ProvisioningService provisioningService, OrganizationRepository organizationRepository,
+            ProvisioningCredentialRepository provisioningCredentialRepository,
             FineractProvisioningClient fineractProvisioningClient) {
         this.jobRepository = jobRepository;
         this.stepRepository = stepRepository;
         this.provisioningService = provisioningService;
         this.organizationRepository = organizationRepository;
+        this.provisioningCredentialRepository = provisioningCredentialRepository;
         this.fineractProvisioningClient = fineractProvisioningClient;
     }
 
@@ -79,8 +83,8 @@ public class ProvisioningWorker {
                 executeStep(step, organization);
             } catch (Exception ex) {
                 log.error("Provisioning step {} failed for org {}", step.getStepName(), organization.getSlug(), ex);
-                provisioningService.failStep(step, ex.getMessage());
-                provisioningService.markJobFailed(job, ex.getMessage());
+                provisioningService.failStep(step, safeMessage(ex));
+                provisioningService.markJobFailed(job, safeMessage(ex));
                 return;
             }
             if ("FAILED".equals(step.getStatus())) {
@@ -113,7 +117,7 @@ public class ProvisioningWorker {
                 }
             }
             case "MIGRATE" -> provisioningService.succeedStep(step, "Tenant schema migrated by provisioning bridge");
-            case "SEED_ADMIN" -> provisioningService.succeedStep(step, "Admin seeding deferred");
+            case "SEED_ADMIN" -> seedAdmin(step, organization);
             case "VERIFY" -> {
                 BridgeProvisioningResult result = fineractProvisioningClient.getTenantStatus(organization.getSlug());
                 if (result != null && "EXISTS".equals(result.status())) {
@@ -125,5 +129,32 @@ public class ProvisioningWorker {
             case "COMPLETE" -> provisioningService.succeedStep(step, "Provisioning complete");
             default -> provisioningService.failStep(step, "Unknown step: " + step.getStepName());
         }
+    }
+
+    private void seedAdmin(ProvisioningStep step, Organization organization) {
+        ProvisioningCredential credential = provisioningCredentialRepository.findByOrganizationId(organization.getId())
+                .orElse(null);
+        if (credential == null) {
+            // Idempotent retry after a previous successful seed that already cleaned up the credential.
+            provisioningService.succeedStep(step, "Admin already seeded");
+            return;
+        }
+        BridgeAdminSeedResult result = fineractProvisioningClient.seedAdmin(organization.getSlug(), credential.getAdminUsername(),
+                credential.getAdminEmail(), credential.getFirstName(), credential.getLastName(), credential.getPasswordHash());
+        if (result != null && ("CREATED".equals(result.status()) || "EXISTS".equals(result.status()))) {
+            provisioningCredentialRepository.deleteByOrganizationId(organization.getId());
+            provisioningService.succeedStep(step, "Owner administrator ready");
+        } else {
+            provisioningService.failStep(step, result == null ? "Admin seeding failed" : result.message());
+        }
+    }
+
+    private static String safeMessage(Exception ex) {
+        String message = ex.getMessage();
+        if (message == null) {
+            return "Provisioning step failed";
+        }
+        // Never leak password material into step messages.
+        return message.replaceAll("(?i)password[^\\s]*", "[redacted]");
     }
 }

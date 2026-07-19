@@ -10,6 +10,7 @@ import { OrganizationListComponent } from './components/organization-list.compon
 import { ProvisioningStatusComponent } from './components/provisioning-status.component';
 import { BillingComponent } from './components/billing.component';
 import { PlatformAdminComponent } from './components/platform-admin.component';
+import { saasAuthGuard, saasPlatformAdminGuard } from './services/saas-auth.guard';
 
 const saasChildRoutes: Routes = [
   {
@@ -30,21 +31,25 @@ const saasChildRoutes: Routes = [
   {
     path: 'organizations',
     component: OrganizationListComponent,
+    canActivate: [saasAuthGuard],
     data: { title: 'Organizations' }
   },
   {
     path: 'organizations/:id/billing',
     component: BillingComponent,
+    canActivate: [saasAuthGuard],
     data: { title: 'Billing' }
   },
   {
     path: 'organizations/:id/provisioning',
     component: ProvisioningStatusComponent,
+    canActivate: [saasAuthGuard],
     data: { title: 'Provisioning' }
   },
   {
     path: 'platform',
     component: PlatformAdminComponent,
+    canActivate: [saasPlatformAdminGuard],
     data: { title: 'Platform Admin' }
   }
 ];

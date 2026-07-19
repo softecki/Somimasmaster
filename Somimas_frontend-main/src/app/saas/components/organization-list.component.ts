@@ -18,6 +18,7 @@ import {
 import { ControlPlaneApiService, OrganizationSummary } from '../services/control-plane-api.service';
 import { OrganizationContextService } from '../services/organization-context.service';
 import { GlobalAuthService } from '../services/global-auth.service';
+import { SettingsService } from 'app/settings/settings.service';
 
 @Component({
   selector: 'mifosx-organization-list',
@@ -109,6 +110,7 @@ export class OrganizationListComponent implements OnInit {
   private api = inject(ControlPlaneApiService);
   private orgContext = inject(OrganizationContextService);
   private auth = inject(GlobalAuthService);
+  private settings = inject(SettingsService);
   private router = inject(Router);
 
   organizations: OrganizationSummary[] = [];
@@ -134,14 +136,21 @@ export class OrganizationListComponent implements OnInit {
   }
 
   selectOrg(org: OrganizationSummary): void {
+    const tenant = org.tenantIdentifier || org.slug;
     this.orgContext.setContext({
       id: org.id,
       name: org.name,
       slug: org.slug,
-      tenantIdentifier: org.tenantIdentifier || org.slug,
+      tenantIdentifier: tenant,
       status: org.status
     });
-    this.router.navigate(['/']);
+    this.settings.setTenantIdentifier(tenant);
+    const existing = this.settings.tenantIdentifiers || [];
+    if (!existing.includes(tenant)) {
+      this.settings.setTenantIdentifiers([...existing, tenant]);
+    }
+    // Control-plane auth is not a Fineract session — send the user to tenant login.
+    this.router.navigate(['/login']);
   }
 
   logout(): void {

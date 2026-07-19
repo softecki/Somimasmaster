@@ -75,6 +75,6 @@ public class OrganizationService {
 
     private OrganizationResponse toResponse(Organization organization) {
         return new OrganizationResponse(organization.getId(), organization.getSlug(), organization.getName(),
-                organization.getStatus(), organization.getCreatedAt());
+                organization.getStatus(), organization.getSlug(), organization.getCreatedAt());
     }
 }

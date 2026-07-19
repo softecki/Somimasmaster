@@ -1,5 +1,4 @@
 <div class="login-page">
-  <!-- Settings bar: server / theme / language -->
   <div class="settings-bar">
     @if (allowServerSwitch()) {
       <mifosx-server-selector></mifosx-server-selector>
@@ -8,59 +7,68 @@
     <mifosx-language-selector></mifosx-language-selector>
   </div>
 
-  <!-- Centered content -->
-  <div class="login-content">
-    <!-- Login card -->
-    <div class="login-card">
-      <img [src]="logoPath" (error)="onLogoError()" alt="{{ 'APP_NAME' | translate }} Logo" class="login-logo" />
-      <h1 class="login-title">{{ 'APP_NAME' | translate }}</h1>
-      <p class="login-subtitle">Softecki Microfinance Management System</p>
+  <div class="login-shell">
+    <div class="login-panel">
+      <div class="login-card">
+        <img [src]="logoPath" (error)="onLogoError()" alt="{{ 'APP_NAME' | translate }} Logo" class="login-logo" />
+        <h1 class="login-title">{{ 'APP_NAME' | translate }}</h1>
+        <p class="login-subtitle">Softecki Microfinance Management System</p>
 
-      @if (displayTenantSelector()) {
-        <mifosx-tenant-selector></mifosx-tenant-selector>
-      }
+        @if (displayTenantSelector()) {
+          <mifosx-tenant-selector></mifosx-tenant-selector>
+        }
 
-      @if (!resetPassword && !twoFactorAuthenticationRequired) {
-        <mifosx-login-form></mifosx-login-form>
-      }
-      @if (resetPassword) {
-        <mifosx-reset-password></mifosx-reset-password>
-      }
-      @if (twoFactorAuthenticationRequired) {
-        <mifosx-two-factor-authentication></mifosx-two-factor-authentication>
-      }
+        @if (!resetPassword && !twoFactorAuthenticationRequired) {
+          <mifosx-login-form></mifosx-login-form>
+        }
+        @if (resetPassword) {
+          <mifosx-reset-password></mifosx-reset-password>
+        }
+        @if (twoFactorAuthenticationRequired) {
+          <mifosx-two-factor-authentication></mifosx-two-factor-authentication>
+        }
+
+        @if (saasModeEnabled) {
+          <div class="register-cta">
+            <p>New to SOMIMAS?</p>
+            <a mat-stroked-button color="primary" routerLink="/saas/signup">Register your organization</a>
+          </div>
+        }
+      </div>
     </div>
 
-    <!-- About SOMIMAS -->
-    <div class="about-somimas">
-      <p class="about-lead">
-        SOMIMAS is the core banking system for running microfinance institutions. Built by Softecki, it gives SACCOs,
-        micro-lenders, and community banks a single secure platform to manage their entire operation &mdash; from
-        client onboarding to loans, savings, accounting, and reporting.
-      </p>
+    <div class="about-panel">
+      <div class="about-somimas">
+        <h2>Run your microfinance institution on SOMIMAS</h2>
+        <p class="about-lead">
+          SOMIMAS is the Softecki Microfinance Management System — the core banking platform for SACCOs,
+          micro-lenders, and community banks. Register your organization once, and SOMIMAS provisions a dedicated
+          tenant database, creates your administrator account, and lets your team manage clients, loans, savings,
+          and accounting from a single secure workspace.
+        </p>
 
-      <div class="feature-grid">
-        <div class="feature">
-          <h3>Clients &amp; Groups</h3>
-          <p>Register and manage clients, groups, and centers with complete records, documents, and KYC details.</p>
-        </div>
-        <div class="feature">
-          <h3>Loan Management</h3>
-          <p>Handle the full loan cycle: product setup, application, approval, disbursement, repayments, and arrears.</p>
-        </div>
-        <div class="feature">
-          <h3>Savings &amp; Deposits</h3>
-          <p>Run savings accounts, fixed and recurring deposits, and share accounts with automated interest posting.</p>
-        </div>
-        <div class="feature">
-          <h3>Accounting &amp; Reports</h3>
-          <p>Full double-entry accounting with a chart of accounts, portfolio monitoring, and detailed reports.</p>
+        <div class="feature-grid">
+          <div class="feature">
+            <h3>Organization onboarding</h3>
+            <p>Register your institution, receive a unique tenant slug, and get a dedicated Fineract database automatically.</p>
+          </div>
+          <div class="feature">
+            <h3>Clients &amp; Groups</h3>
+            <p>Register and manage clients, groups, and centers with complete records, documents, and KYC details.</p>
+          </div>
+          <div class="feature">
+            <h3>Loan Management</h3>
+            <p>Handle the full loan cycle: product setup, application, approval, disbursement, repayments, and arrears.</p>
+          </div>
+          <div class="feature">
+            <h3>Savings &amp; Accounting</h3>
+            <p>Run savings and deposits with double-entry accounting, portfolio monitoring, and operational reports.</p>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Footer -->
   <mifosx-footer [styleClass]="'m-t-20'"></mifosx-footer>
 
   <div class="reload-row">

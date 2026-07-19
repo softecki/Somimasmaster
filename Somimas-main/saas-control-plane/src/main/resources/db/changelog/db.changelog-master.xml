@@ -31,5 +31,6 @@
     <include file="parts/0007_domains_and_routing.xml" relativeToChangelogFile="true"/>
     <include file="parts/0008_platform_audit.xml" relativeToChangelogFile="true"/>
     <include file="parts/0009_seed_plans.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0010_provisioning_credentials.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

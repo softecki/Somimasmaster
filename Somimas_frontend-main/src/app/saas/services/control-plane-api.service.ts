@@ -7,8 +7,9 @@ import { GlobalAuthService } from './global-auth.service';
 export interface SignupRequest {
   email: string;
   password: string;
+  firstName: string;
+  lastName: string;
   organizationName: string;
-  slug: string;
 }
 
 export interface LoginRequest {

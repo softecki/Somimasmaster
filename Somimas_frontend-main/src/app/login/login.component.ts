@@ -1,6 +1,7 @@
 /** Angular Imports */
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { MatButton } from '@angular/material/button';
 
 /** rxjs Imports */
 import { Subscription } from 'rxjs';
@@ -34,6 +35,8 @@ import { STANDALONE_SHARED_IMPORTS } from 'app/standalone-shared.module';
   styleUrls: ['./login.component.scss'],
   imports: [
     ...STANDALONE_SHARED_IMPORTS,
+    RouterLink,
+    MatButton,
     LanguageSelectorComponent,
     ThemeToggleComponent,
     ServerSelectorComponent,
@@ -51,6 +54,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   private router = inject(Router);
 
   public environment = environment;
+  readonly saasModeEnabled = !!environment.saasMode;
 
   /** True if password requires a reset. */
   resetPassword = false;
