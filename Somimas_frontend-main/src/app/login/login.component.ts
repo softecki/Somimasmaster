@@ -21,8 +21,6 @@ import { TenantSelectorComponent } from '../shared/tenant-selector/tenant-select
 import { LoginFormComponent } from './login-form/login-form.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
 import { TwoFactorAuthenticationComponent } from './two-factor-authentication/two-factor-authentication.component';
-import { MatList, MatListItem } from '@angular/material/list';
-import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { FooterComponent } from '../shared/footer/footer.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { STANDALONE_SHARED_IMPORTS } from 'app/standalone-shared.module';
@@ -43,13 +41,8 @@ import { STANDALONE_SHARED_IMPORTS } from 'app/standalone-shared.module';
     LoginFormComponent,
     ResetPasswordComponent,
     TwoFactorAuthenticationComponent,
-    MatList,
-    MatListItem,
-    MatMenuTrigger,
     FooterComponent,
-    FaIconComponent,
-    MatMenu,
-    MatMenuItem
+    FaIconComponent
   ]
 })
 export class LoginComponent implements OnInit, OnDestroy {

@@ -101,7 +101,7 @@ export class AmountCollectedPieComponent implements OnInit {
           datasets: [
             {
               backgroundColor: [
-                'dodgerblue',
+                '#2e7d32',
                 'red'
               ],
               data: data

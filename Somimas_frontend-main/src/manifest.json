@@ -1,12 +1,12 @@
 {
-  "short_name": "MifosX",
-  "name": "MifosX Web App",
+  "short_name": "SOMIMAS",
+  "name": "SOMIMAS - Softecki Microfinance Management System",
   "start_url": "/",
   "scope": "/",
-  "theme_color": "#fff",
+  "theme_color": "#2e7d32",
   "background_color": "#fff",
   "display": "standalone",
-  "description": "MifosX Web App is the default web application built on top of the Fineract platform for the Mifos user community leveraging the popular Angular framework.",
+  "description": "SOMIMAS is the Softecki Microfinance Management System, the core banking system for running microfinance institutions.",
   "icons": [
     {
       "src": "assets/images/MifosX_logo.png",

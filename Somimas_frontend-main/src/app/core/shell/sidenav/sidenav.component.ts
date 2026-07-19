@@ -114,10 +114,10 @@ export class SidenavComponent implements OnInit, AfterViewInit {
   }
 
   /**
-   * Opens Mifos JIRA Wiki page.
+   * Opens the Softecki support page.
    */
   help() {
-    window.open('https://mifosforge.jira.com/wiki/spaces/docs/pages/52035622/User+Manual', '_blank');
+    window.open('https://softecki.co.tz', '_blank');
   }
 
   /**

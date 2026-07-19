@@ -34,7 +34,7 @@ import { I18nService } from './core/i18n/i18n.service';
 import { ThemingService } from './shared/theme-toggle/theming.service';
 
 /** Initialize Logger */
-const log = new Logger('MifosX');
+const log = new Logger('SOMIMAS');
 
 import { registerLocaleData } from '@angular/common';
 import localeCS from '@angular/common/locales/cs';

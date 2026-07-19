@@ -250,8 +250,8 @@ export class ClientTrendsBarComponent implements OnInit {
             {
               label: 'New Clients',
               data: clientCounts,
-              backgroundColor: 'dodgerblue',
-              borderColor: 'dodgerblue',
+              backgroundColor: '#2e7d32',
+              borderColor: '#2e7d32',
               borderWidth: 2,
               fill: false
             },
@@ -273,7 +273,7 @@ export class ClientTrendsBarComponent implements OnInit {
               title: {
                 display: true,
                 text: 'Values',
-                color: '#1074B9'
+                color: '#2E7D32'
               }
             }
           }

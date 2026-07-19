@@ -1,10 +1,11 @@
 {
-  "name": "mifosx-web-app",
+  "name": "somimas-web-app",
   "version": "1.0.0",
-  "description": "MifosX Web App is the default web application built on top of the Fineract platform for the Mifos user community leveraging the popular Angular framework.",
+  "description": "SOMIMAS (Softecki Microfinance Management System) web application - the core banking system for running microfinance institutions, built on top of the Fineract platform with Angular.",
   "keywords": [
-    "mifos",
-    "openmf",
+    "somimas",
+    "softecki",
+    "microfinance",
     "fineract",
     "angular"
   ],
