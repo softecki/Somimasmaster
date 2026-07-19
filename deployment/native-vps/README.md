@@ -322,6 +322,31 @@ Installed to `/etc/` by `bootstrap-ubuntu.sh`.
 | Blank Angular page | Missing `env.js` | Re-run `deploy.sh`; check `/assets/env.js` |
 | Certbot fails | DNS not propagated | Verify `dig microfinance.softecki.com` |
 | Backup fails | `somimas_backup` password | Configure `/etc/somimas/backup.env` |
+| `ng build` prints `Killed` | Kernel OOM killer (no free RAM/swap) | Add swap (below) and/or raise `NODE_XMX_MB` |
+| Gradle daemon disappears | Kernel OOM killer | Add swap and/or lower `GRADLE_XMX` |
+
+### Build is `Killed` (out of memory)
+
+`Killed` with no other error means the Linux OOM killer terminated the build.
+The Java services and MariaDB already occupy most of the RAM, so the build has
+no headroom. Add swap once (persists across reboots):
+
+```bash
+sudo fallocate -l 3G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
+
+The deploy scripts also cap build memory; tune per run if needed:
+
+```bash
+# Angular (default 2048 MB)
+NODE_XMX_MB=3072 bash ./deployment/native-vps/deploy-frontend.sh ...
+# Gradle (default 2g)
+GRADLE_XMX=3g bash ./deployment/native-vps/deploy-backend.sh ...
+```
 
 ---
 

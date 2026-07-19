@@ -676,6 +676,20 @@ sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```
 
+### Angular build prints `Killed`
+
+`Killed` with no other error means the kernel OOM killer terminated `ng build` because the VPS ran out of memory while the Java services and MariaDB were running. Fix it the same way as the Gradle OOM:
+
+1. Create swap once (commands above) if `swapon --show` prints nothing.
+2. Re-run the deploy. The deploy scripts cap the Node heap at 2048 MB by default; raise it per run if the build still fails with a JavaScript heap error:
+
+```bash
+NODE_XMX_MB=3072 bash deployment/native-vps/deploy-frontend.sh \
+  --repo-dir /srv/somimas/app \
+  --branch main \
+  --app-domain microfinance.softecki.com
+```
+
 ### `502 Bad Gateway`
 
 The SPA can load while a proxied Java service is down.

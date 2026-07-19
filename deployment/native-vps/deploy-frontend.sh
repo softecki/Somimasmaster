@@ -46,7 +46,21 @@ if [[ "${NO_PULL}" != "true" ]]; then
   git -C "${REPO_DIR}" pull --ff-only origin "${BRANCH}"
 fi
 
-echo "[build] Building Angular production frontend..."
+# Cap the Node heap so the Angular build is not OOM-killed on small VPSes.
+# Tune with NODE_XMX_MB (megabytes). If the build dies with a JS heap error,
+# raise this AND make sure the server has swap (see README troubleshooting).
+NODE_XMX_MB="${NODE_XMX_MB:-2048}"
+export NODE_OPTIONS="--max-old-space-size=${NODE_XMX_MB}"
+
+if ! swapon --show 2>/dev/null | grep -q .; then
+  echo "[build] WARNING: no swap configured. The Angular build may be OOM-killed."
+  echo "[build]          Add swap once with:"
+  echo "[build]            sudo fallocate -l 3G /swapfile && sudo chmod 600 /swapfile"
+  echo "[build]            sudo mkswap /swapfile && sudo swapon /swapfile"
+  echo "[build]            echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab"
+fi
+
+echo "[build] Building Angular production frontend (Node heap ${NODE_XMX_MB} MB)..."
 (
   cd "${FRONTEND_DIR}"
   # npm ci wipes and reinstalls node_modules from scratch (slow). Only do the

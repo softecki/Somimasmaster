@@ -88,7 +88,12 @@ echo "[build] Building Fineract (including the Somimas SaaS starter) and control
     :fineract-provider:bootJar :saas-control-plane:bootJar
 )
 
-echo "[build] Building Angular production frontend..."
+# Cap the Node heap so the Angular build is not OOM-killed on small VPSes
+# (tunable via NODE_XMX_MB, in megabytes).
+NODE_XMX_MB="${NODE_XMX_MB:-2048}"
+export NODE_OPTIONS="--max-old-space-size=${NODE_XMX_MB}"
+
+echo "[build] Building Angular production frontend (Node heap ${NODE_XMX_MB} MB)..."
 (
   cd "${FRONTEND_DIR}"
   npm ci
