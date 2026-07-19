@@ -1,7 +1,12 @@
 .login-page {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  // The app sets `overflow: hidden` on html/body (the main shell scrolls
+  // internally), so the login page must be its own scroll container.
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   background: linear-gradient(160deg, #f4f9f4 0%, #e8f3e9 55%, #dcecde 100%);
 }
 
