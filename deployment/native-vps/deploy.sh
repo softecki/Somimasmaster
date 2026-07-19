@@ -8,7 +8,13 @@
 #     --frontend-dir /path/to/dist/web-app \
 #     [--release-id 20260718T141500Z] \
 #     [--app-domain app.example.com] \
+#     [--frontend-only] [--backend-only] \
 #     [--skip-health-check]
+#
+# Modes:
+#   (default)         Deploy backend jars AND frontend; restart Java + reload Nginx.
+#   --frontend-only   Deploy only the Angular frontend; reload Nginx, DO NOT touch Java.
+#   --backend-only    Deploy only the backend jars; restart Java, reuse current frontend.
 #
 set -euo pipefail
 
@@ -20,12 +26,13 @@ CONTROL_PLANE_JAR=""
 FRONTEND_DIR=""
 APP_DOMAIN="${APP_DOMAIN:-microfinance.softecki.com}"
 SKIP_HEALTH=false
+MODE="full"   # full | frontend | backend
 
 log() { printf '[deploy] %s\n' "$*"; }
 die() { printf '[deploy] ERROR: %s\n' "$*" >&2; exit 1; }
 
 usage() {
-  sed -n '2,12p' "$0"
+  sed -n '2,17p' "$0"
   exit 1
 }
 
@@ -36,6 +43,8 @@ while [[ $# -gt 0 ]]; do
     --frontend-dir)        FRONTEND_DIR="$2"; shift 2 ;;
     --release-id)          RELEASE_ID="$2"; shift 2 ;;
     --app-domain)          APP_DOMAIN="$2"; shift 2 ;;
+    --frontend-only)       MODE="frontend"; shift ;;
+    --backend-only)        MODE="backend"; shift ;;
     --skip-health-check)   SKIP_HEALTH=true; shift ;;
     -h|--help)             usage ;;
     *) die "Unknown argument: $1" ;;
@@ -43,16 +52,26 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ "${EUID:-$(id -u)}" -ne 0 ]] && die "Run as root"
-[[ -n "${FINERACT_JAR}" && -f "${FINERACT_JAR}" ]] || die "--fineract-jar required and must exist"
-[[ -n "${CONTROL_PLANE_JAR}" && -f "${CONTROL_PLANE_JAR}" ]] || die "--control-plane-jar required and must exist"
-[[ -n "${FRONTEND_DIR}" && -d "${FRONTEND_DIR}" ]] || die "--frontend-dir required and must exist"
 
-# Angular's application builder writes browser assets under a browser/
-# subdirectory. Accept either that directory or its parent.
-if [[ ! -f "${FRONTEND_DIR}/index.html" && -f "${FRONTEND_DIR}/browser/index.html" ]]; then
-  FRONTEND_DIR="${FRONTEND_DIR}/browser"
+DEPLOY_BACKEND=true
+DEPLOY_FRONTEND=true
+[[ "${MODE}" == "frontend" ]] && DEPLOY_BACKEND=false
+[[ "${MODE}" == "backend" ]] && DEPLOY_FRONTEND=false
+
+if [[ "${DEPLOY_BACKEND}" == "true" ]]; then
+  [[ -n "${FINERACT_JAR}" && -f "${FINERACT_JAR}" ]] || die "--fineract-jar required and must exist"
+  [[ -n "${CONTROL_PLANE_JAR}" && -f "${CONTROL_PLANE_JAR}" ]] || die "--control-plane-jar required and must exist"
 fi
-[[ -f "${FRONTEND_DIR}/index.html" ]] || die "Frontend directory must contain index.html (or browser/index.html)"
+
+if [[ "${DEPLOY_FRONTEND}" == "true" ]]; then
+  [[ -n "${FRONTEND_DIR}" && -d "${FRONTEND_DIR}" ]] || die "--frontend-dir required and must exist"
+  # Angular's application builder writes browser assets under a browser/
+  # subdirectory. Accept either that directory or its parent.
+  if [[ ! -f "${FRONTEND_DIR}/index.html" && -f "${FRONTEND_DIR}/browser/index.html" ]]; then
+    FRONTEND_DIR="${FRONTEND_DIR}/browser"
+  fi
+  [[ -f "${FRONTEND_DIR}/index.html" ]] || die "Frontend directory must contain index.html (or browser/index.html)"
+fi
 
 if [[ -z "${RELEASE_ID}" ]]; then
   RELEASE_ID="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -63,14 +82,19 @@ FRONTEND_RELEASE="${WWW_ROOT}/releases/${RELEASE_ID}"
 PREVIOUS_BACKEND="$(readlink -f "${DEPLOY_ROOT}/current" 2>/dev/null || true)"
 PREVIOUS_FRONTEND="$(readlink -f "${WWW_ROOT}/current" 2>/dev/null || true)"
 
-log "Release ID: ${RELEASE_ID}"
+log "Release ID: ${RELEASE_ID} (mode: ${MODE})"
 
-install -d -o somimas -g somimas -m 0750 "${BACKEND_RELEASE}"
+if [[ "${DEPLOY_BACKEND}" == "true" ]]; then
+  install -d -o somimas -g somimas -m 0750 "${BACKEND_RELEASE}"
+  log "Copying backend artifacts..."
+  install -o somimas -g somimas -m 0640 "${FINERACT_JAR}" "${BACKEND_RELEASE}/fineract-provider.jar"
+  install -o somimas -g somimas -m 0640 "${CONTROL_PLANE_JAR}" "${BACKEND_RELEASE}/saas-control-plane.jar"
+fi
+
+if [[ "${DEPLOY_FRONTEND}" != "true" ]]; then
+  log "Skipping frontend (backend-only); current frontend release is left in place."
+else
 install -d -o www-data -g www-data -m 0755 "${FRONTEND_RELEASE}"
-
-log "Copying backend artifacts..."
-install -o somimas -g somimas -m 0640 "${FINERACT_JAR}" "${BACKEND_RELEASE}/fineract-provider.jar"
-install -o somimas -g somimas -m 0640 "${CONTROL_PLANE_JAR}" "${BACKEND_RELEASE}/saas-control-plane.jar"
 
 log "Copying frontend to ${FRONTEND_RELEASE}..."
 rsync -a --delete "${FRONTEND_DIR}/" "${FRONTEND_RELEASE}/"
@@ -119,26 +143,35 @@ envsubst < "${ENV_TEMPLATE}" > "${ENV_OUTPUT}.tmp"
 mv "${ENV_OUTPUT}.tmp" "${ENV_OUTPUT}"
 chown www-data:www-data "${ENV_OUTPUT}"
 chmod 0644 "${ENV_OUTPUT}"
+fi
 
 log "Switching current symlinks..."
-ln -sfn "${BACKEND_RELEASE}" "${DEPLOY_ROOT}/current"
-ln -sfn "${FRONTEND_RELEASE}" "${WWW_ROOT}/current"
-
-# Record previous release for rollback
-if [[ -n "${PREVIOUS_BACKEND}" ]]; then
-  basename "${PREVIOUS_BACKEND}" > "${DEPLOY_ROOT}/.previous-release" 2>/dev/null || true
+if [[ "${DEPLOY_BACKEND}" == "true" ]]; then
+  ln -sfn "${BACKEND_RELEASE}" "${DEPLOY_ROOT}/current"
+  [[ -n "${PREVIOUS_BACKEND}" ]] && basename "${PREVIOUS_BACKEND}" > "${DEPLOY_ROOT}/.previous-release" 2>/dev/null || true
+  echo "${RELEASE_ID}" > "${DEPLOY_ROOT}/.current-release"
 fi
-if [[ -n "${PREVIOUS_FRONTEND}" ]]; then
-  basename "${PREVIOUS_FRONTEND}" > "${WWW_ROOT}/.previous-release" 2>/dev/null || true
+if [[ "${DEPLOY_FRONTEND}" == "true" ]]; then
+  ln -sfn "${FRONTEND_RELEASE}" "${WWW_ROOT}/current"
+  [[ -n "${PREVIOUS_FRONTEND}" ]] && basename "${PREVIOUS_FRONTEND}" > "${WWW_ROOT}/.previous-release" 2>/dev/null || true
+  echo "${RELEASE_ID}" > "${WWW_ROOT}/.current-release"
 fi
-echo "${RELEASE_ID}" > "${DEPLOY_ROOT}/.current-release"
-echo "${RELEASE_ID}" > "${WWW_ROOT}/.current-release"
 
-log "Restarting services..."
 systemctl daemon-reload
-systemctl restart fineract.service
-systemctl restart somimas-control-plane.service
+if [[ "${DEPLOY_BACKEND}" == "true" ]]; then
+  log "Restarting Java services..."
+  systemctl restart fineract.service
+  systemctl restart somimas-control-plane.service
+else
+  log "Frontend-only deploy: leaving Java services running."
+fi
+log "Reloading Nginx..."
 systemctl reload nginx
+
+# Frontend-only deploys do not touch Java, so skip the Java health checks.
+if [[ "${DEPLOY_BACKEND}" != "true" ]]; then
+  SKIP_HEALTH=true
+fi
 
 if [[ "${SKIP_HEALTH}" == "false" ]]; then
   log "Running health checks..."

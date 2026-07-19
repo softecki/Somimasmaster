@@ -188,6 +188,44 @@ For later releases, run the same `deploy-from-git.sh` command. It performs
 `git pull --ff-only`, builds both Java services and Angular, updates systemd
 files, validates Nginx, deploys an atomic release, and runs both health checks.
 
+### Fast redeploys (only rebuild what changed)
+
+`deploy-from-git.sh` rebuilds **everything**. Most changes only touch one half
+of the app, so prefer the fast-path scripts — they build just that half and
+leave the other side running untouched.
+
+**Frontend-only** (UI, branding, translations, theme, styles — no Java rebuild,
+no service restart, just an Nginx reload):
+
+```bash
+cd /srv/somimas/app
+bash ./deployment/native-vps/deploy-frontend.sh \
+  --repo-dir /srv/somimas/app --branch main \
+  --app-domain microfinance.softecki.com
+```
+
+**Backend-only** (Java/Fineract/control-plane — rebuilds the jars with the
+Gradle build cache and restarts only the Java services; the frontend is left
+in place):
+
+```bash
+cd /srv/somimas/app
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+bash ./deployment/native-vps/deploy-backend.sh \
+  --repo-dir /srv/somimas/app --branch main \
+  --app-domain microfinance.softecki.com
+```
+
+Notes:
+
+- Both scripts `git pull` first; pass `--no-pull` to deploy already-pulled code.
+- The frontend script skips `npm ci` when `package-lock.json` is unchanged, so
+  dependencies are only reinstalled when they actually change.
+- `--build-cache` makes incremental Java builds recompile only changed modules.
+- Use the full `deploy-from-git.sh` when a change spans both halves, or after
+  dependency/lockfile or systemd/Nginx template changes.
+- Rollback and atomic release switching work the same for all three scripts.
+
 ---
 
 ## 4. Rollback
