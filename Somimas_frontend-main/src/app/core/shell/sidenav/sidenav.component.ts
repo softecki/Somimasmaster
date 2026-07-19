@@ -5,6 +5,7 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
 /** Custom Components */
 import { KeyboardShortcutsDialogComponent } from 'app/shared/keyboard-shortcuts-dialog/keyboard-shortcuts-dialog.component';
+import { ConfigurationWizardComponent } from '../../../configuration-wizard/configuration-wizard.component';
 
 /** Custom Services */
 import { AuthenticationService } from '../../authentication/authentication.service';
@@ -13,6 +14,7 @@ import { ConfigurationWizardService } from '../../../configuration-wizard/config
 
 /** Custom Imports */
 import { frequentActivities } from './frequent-activities';
+import { sidenavGroups, SidenavGroup, SidenavItem } from './sidenav-items';
 import { SettingsService } from 'app/settings/settings.service';
 import { NgClass } from '@angular/common';
 import { MatIconButton, MatButton } from '@angular/material/button';
@@ -25,6 +27,9 @@ import { MatLine } from '@angular/material/grid-list';
 import { STANDALONE_SHARED_IMPORTS } from 'app/standalone-shared.module';
 
 import { catchError, finalize, of, take } from 'rxjs';
+
+/** Local storage key remembering which sidebar groups the user collapsed. */
+const COLLAPSED_GROUPS_STORAGE_KEY = 'somimasSidenavCollapsedGroups';
 
 /**
  * Sidenav component.
@@ -67,35 +72,137 @@ export class SidenavComponent implements OnInit, AfterViewInit {
   mappedActivities: any[] = [];
   /** Collection of possible frequent activities */
   frequentActivities: any[] = frequentActivities;
+  /** Grouped navigation items, filtered by user permissions. */
+  navGroups: SidenavGroup[] = [];
+  /** Ids of groups the user collapsed. */
+  private collapsedGroups = new Set<string>();
 
   /* Refernce of logo */
   @ViewChild('logo') logo: ElementRef<any>;
   /* Template for popover on logo */
   @ViewChild('templateLogo') templateLogo: TemplateRef<any>;
-  /* Refernce of chart of accounts */
-  @ViewChild('chartOfAccounts') chartOfAccounts: ElementRef<any>;
   /* Template for popover on chart of accounts */
   @ViewChild('templateChartOfAccounts') templateChartOfAccounts: TemplateRef<any>;
 
-  /**
-   * @param {Router} router Router for navigation.
-   * @param {MatDialog} dialog Mat Dialog
-   * @param {AuthenticationService} authenticationService Authentication Service.
-   * @param {SettingsService} settingsService Settings Service.
-   * @param {ConfigurationWizardService} configurationWizardService ConfigurationWizard Service.
-   * @param {PopoverService} popoverService PopoverService.
-   */
   constructor() {
     this.userActivity = JSON.parse(localStorage.getItem('mifosXLocation'));
+    try {
+      const stored = JSON.parse(localStorage.getItem(COLLAPSED_GROUPS_STORAGE_KEY) || '[]');
+      if (Array.isArray(stored)) {
+        this.collapsedGroups = new Set(stored);
+      }
+    } catch {
+      this.collapsedGroups = new Set();
+    }
   }
 
   /**
-   * Sets the username of the authenticated user.
+   * Sets the username of the authenticated user and builds the
+   * permission-filtered navigation groups.
    */
   ngOnInit() {
     const credentials = this.authenticationService.getCredentials();
     this.username = credentials.username;
     this.setMappedAcitivites();
+    this.navGroups = sidenavGroups
+      .filter((group) => this.hasPermission(group.permission))
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => this.hasPermission(item.permission))
+      }))
+      .filter((group) => group.items.length > 0);
+  }
+
+  /**
+   * Checks a permission code against the user's permissions,
+   * mirroring the HasPermissionDirective rules.
+   */
+  private hasPermission(permission?: string): boolean {
+    if (!permission) {
+      return true;
+    }
+    const userPermissions: string[] = this.authenticationService.getCredentials().permissions || [];
+    if (userPermissions.includes('ALL_FUNCTIONS')) {
+      return true;
+    }
+    if (permission.startsWith('READ_') && userPermissions.includes('ALL_FUNCTIONS_READ')) {
+      return true;
+    }
+    return userPermissions.includes(permission);
+  }
+
+  /** True unless the user explicitly collapsed the group. */
+  isExpanded(groupId: string): boolean {
+    return !this.collapsedGroups.has(groupId);
+  }
+
+  /** Toggles a group's expanded state and persists it. */
+  toggleGroup(groupId: string) {
+    if (this.collapsedGroups.has(groupId)) {
+      this.collapsedGroups.delete(groupId);
+    } else {
+      this.collapsedGroups.add(groupId);
+    }
+    localStorage.setItem(COLLAPSED_GROUPS_STORAGE_KEY, JSON.stringify(Array.from(this.collapsedGroups)));
+  }
+
+  /** Runs a non-route navigation item action. */
+  runAction(action: SidenavItem['action']) {
+    switch (action) {
+      case 'configurationWizard':
+        this.openConfigurationWizard();
+        break;
+      case 'keyboardShortcuts':
+        this.showKeyboardShortcuts();
+        break;
+      case 'help':
+        this.help();
+        break;
+    }
+  }
+
+  /**
+   * Opens the Configuration Wizard dialog (previously launched from the toolbar).
+   */
+  openConfigurationWizard() {
+    const configWizardRef = this.dialog.open(ConfigurationWizardComponent, {});
+
+    configWizardRef.afterClosed().subscribe((response: { show: number } | undefined) => {
+      if (!response) {
+        return;
+      }
+
+      switch (response.show) {
+        case 1:
+          this.configurationWizardService.showToolbar = true;
+          this.router.routeReuseStrategy.shouldReuseRoute = () => false;
+          this.router.onSameUrlNavigation = 'reload';
+          this.router.navigate(['/home']);
+          break;
+        case 2:
+          this.configurationWizardService.showCreateOffice = true;
+          this.router.navigate(['/organization']);
+          break;
+        case 3:
+          this.configurationWizardService.showDatatables = true;
+          this.router.navigate(['/system']);
+          break;
+        case 4:
+          this.configurationWizardService.showChartofAccounts = true;
+          this.router.navigate(['/accounting']);
+          break;
+        case 5:
+          this.configurationWizardService.showCharges = true;
+          this.router.navigate(['/products']);
+          break;
+        case 6:
+          this.configurationWizardService.showManageFunds = true;
+          this.router.navigate(['/organization']);
+          break;
+        default:
+          break;
+      }
+    });
   }
 
   /**
@@ -213,6 +320,17 @@ export class SidenavComponent implements OnInit, AfterViewInit {
   }
 
   /**
+   * Shows a popover anchored to a navigation item rendered from the grouped
+   * config (items carry `id="sidenav-item-<id>"` in the DOM).
+   */
+  showPopoverById(template: TemplateRef<any>, itemId: string, position: string): void {
+    const target = document.getElementById('sidenav-item-' + itemId);
+    if (target) {
+      this.showPopover(template, target, position, true);
+    }
+  }
+
+  /**
    * To show popovers
    */
   ngAfterViewInit() {
@@ -223,7 +341,7 @@ export class SidenavComponent implements OnInit, AfterViewInit {
     }
     if (this.configurationWizardService.showSideNavChartofAccounts === true) {
       setTimeout(() => {
-        this.showPopover(this.templateChartOfAccounts, this.chartOfAccounts.nativeElement, 'top', true);
+        this.showPopoverById(this.templateChartOfAccounts, 'chart-of-accounts', 'top');
       });
     }
   }

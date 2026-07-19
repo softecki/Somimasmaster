@@ -13,7 +13,6 @@ import {
   ChangeDetectorRef,
   inject
 } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
 import { MatSidenav } from '@angular/material/sidenav';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Router, RouterLink } from '@angular/router';
@@ -28,10 +27,9 @@ import { PopoverService } from '../../../configuration-wizard/popover/popover.se
 import { ConfigurationWizardService } from '../../../configuration-wizard/configuration-wizard.service';
 
 /** Custom Components */
-import { ConfigurationWizardComponent } from '../../../configuration-wizard/configuration-wizard.component';
 import { NotificationsTrayComponent } from 'app/shared/notifications-tray/notifications-tray.component';
 import { MatToolbar } from '@angular/material/toolbar';
-import { MatIconButton, MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { MatTooltip } from '@angular/material/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
@@ -42,10 +40,13 @@ import { NotificationsTrayComponent as NotificationsTrayComponent_1 } from '../.
 import { ThemeToggleComponent } from '../../../shared/theme-toggle/theme-toggle.component';
 import { STANDALONE_SHARED_IMPORTS } from 'app/standalone-shared.module';
 
-import { environment } from '../../../../environments/environment';
-
 /**
  * Toolbar component.
+ *
+ * All business navigation (Institution, Accounting, Reports, Admin,
+ * Configuration Wizard) lives in the sidebar. The toolbar only hosts the
+ * sidenav toggles and utility controls: search, language, notifications,
+ * theme and the user menu.
  */
 @Component({
   selector: 'mifosx-toolbar',
@@ -73,13 +74,12 @@ export class ToolbarComponent implements OnInit, AfterViewInit, AfterContentChec
   private authenticationService = inject(AuthenticationService);
   private popoverService = inject(PopoverService);
   private configurationWizardService = inject(ConfigurationWizardService);
-  private dialog = inject(MatDialog);
   private changeDetector = inject(ChangeDetectorRef);
 
-  /* Reference of institution */
-  @ViewChild('institution') institution: ElementRef<any>;
-  /* Template for popover on institution */
-  @ViewChild('templateInstitution') templateInstitution: TemplateRef<any>;
+  /* Reference of global search */
+  @ViewChild('globalSearch') globalSearch: ElementRef<any>;
+  /* Template for popover on global search */
+  @ViewChild('templateGlobalSearch') templateGlobalSearch: TemplateRef<any>;
   /* Reference of appMenu */
   @ViewChild('appMenu') appMenu: ElementRef<any>;
   /* Template for popover on appMenu */
@@ -177,58 +177,12 @@ export class ToolbarComponent implements OnInit, AfterViewInit, AfterContentChec
   }
 
   /**
-   * Open Configuration Wizard Dialog
-   */
-  openDialog() {
-    const configWizardRef = this.dialog.open(ConfigurationWizardComponent, {});
-
-    configWizardRef.afterClosed().subscribe((response: { show: number } | undefined) => {
-      if (!response) {
-        return;
-      }
-
-      switch (response.show) {
-        case 1:
-          this.configurationWizardService.showToolbar = true;
-          this.router.routeReuseStrategy.shouldReuseRoute = () => false;
-          this.router.onSameUrlNavigation = 'reload';
-          this.router.navigate(['/home']);
-          break;
-        case 2:
-          this.configurationWizardService.showCreateOffice = true;
-          this.router.navigate(['/organization']);
-          break;
-        case 3:
-          this.configurationWizardService.showDatatables = true;
-          this.router.navigate(['/system']);
-          break;
-        case 4:
-          this.configurationWizardService.showChartofAccounts = true;
-          this.router.navigate(['/accounting']);
-          break;
-        case 5:
-          this.configurationWizardService.showCharges = true;
-          this.router.navigate(['/products']);
-          break;
-        case 6:
-          this.configurationWizardService.showManageFunds = true;
-          this.router.navigate(['/organization']);
-          break;
-        case 0:
-          break;
-        default:
-          break;
-      }
-    });
-  }
-
-  /**
    * To show popovers
    */
   ngAfterViewInit() {
     if (this.configurationWizardService.showToolbar === true) {
       setTimeout(() => {
-        this.showPopover(this.templateInstitution, this.institution.nativeElement);
+        this.showPopover(this.templateGlobalSearch, this.globalSearch.nativeElement);
       });
     }
 
@@ -244,9 +198,5 @@ export class ToolbarComponent implements OnInit, AfterViewInit, AfterContentChec
         this.showPopover(this.templateAppMenu, this.appMenu.nativeElement);
       });
     }
-  }
-
-  navigateMenu(routePath: string): void {
-    this.router.navigate([routePath]);
   }
 }

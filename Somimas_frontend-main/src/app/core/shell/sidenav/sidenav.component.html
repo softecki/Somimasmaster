@@ -21,6 +21,14 @@
         <button
           class="xs-button"
           mat-icon-button
+          matTooltip="{{ 'labels.menus.Profile' | translate }}"
+          [routerLink]="['/profile']"
+        >
+          <fa-icon icon="user"></fa-icon>
+        </button>
+        <button
+          class="xs-button"
+          mat-icon-button
           matTooltip="{{ 'tooltips.Settings' | translate }}"
           [routerLink]="['/settings']"
         >
@@ -33,158 +41,83 @@
     </div>
 
     <div class="app-sidenav">
-      <div #frequentlyAccessed>
-        <div class="mt-1 mb-1 nav-item-sep">
-          <mat-divider></mat-divider>
-          <span class="text-muted icon-menu-title">{{ 'labels.menus.Frequently Accessed' | translate }}</span>
-        </div>
-      </div>
-      <div class="icon-menu">
-        @for (activity of mappedActivities; track activity) {
-          <div class="icon-menu-item">
-            <button
-              mat-raised-button
-              [matTooltipPosition]="tooltipPosition"
-              [matTooltip]="activity.toolTip"
-              [routerLink]="[activity.path]"
-            >
-              <fa-icon [icon]="activity.icon" size="lg"></fa-icon>
-            </button>
+      @if (mappedActivities.length > 0) {
+        <div #frequentlyAccessed>
+          <div class="mt-1 mb-1 nav-item-sep">
+            <mat-divider></mat-divider>
+            <span class="text-muted icon-menu-title">{{ 'labels.menus.Frequently Accessed' | translate }}</span>
           </div>
-        }
-      </div>
+        </div>
+        <div class="icon-menu">
+          @for (activity of mappedActivities; track activity) {
+            <div class="icon-menu-item">
+              <button
+                mat-raised-button
+                [matTooltipPosition]="tooltipPosition"
+                [matTooltip]="activity.toolTip"
+                [routerLink]="[activity.path]"
+              >
+                <fa-icon [icon]="activity.icon" size="lg"></fa-icon>
+              </button>
+            </div>
+          }
+        </div>
+      }
 
-      <div class="nav-item-sep">
-        <mat-divider></mat-divider>
-        <span class="text-muted">{{ 'labels.menus.Main Items' | translate }}</span>
-      </div>
+      @for (group of navGroups; track group.id) {
+        <div class="nav-group">
+          <div
+            class="nav-item-sep nav-group-header"
+            (click)="toggleGroup(group.id)"
+            (keydown.enter)="toggleGroup(group.id)"
+            tabindex="0"
+          >
+            <mat-divider></mat-divider>
+            <span class="text-muted">
+              {{ 'labels.menus.' + group.label | translate }}
+              <fa-icon
+                class="nav-group-chevron"
+                [icon]="isExpanded(group.id) ? 'chevron-down' : 'chevron-right'"
+                size="xs"
+              ></fa-icon>
+            </span>
+          </div>
 
-      <mat-nav-list>
-        <mat-list-item
-          [routerLink]="['/dashboard']"
-          [matTooltipPosition]="tooltipPosition"
-          matTooltip="{{ 'tooltips.Dashboard' | translate }}"
-          routerLinkActive="active-menu"
-          [routerLinkActiveOptions]="{ exact: false }"
-        >
-          <mat-icon matListIcon>
-            <fa-icon icon="tachometer-alt" size="sm"></fa-icon>
-          </mat-icon>
-          <a matLine #dashboard>{{ 'labels.menus.Dashboard' | translate }}</a>
-        </mat-list-item>
-        <mat-list-item
-          [routerLink]="['/navigation']"
-          [matTooltipPosition]="tooltipPosition"
-          matTooltip="{{ 'tooltips.Navigation' | translate }}"
-          routerLinkActive="active-menu"
-          [routerLinkActiveOptions]="{ exact: false }"
-        >
-          <mat-icon matListIcon>
-            <fa-icon icon="location-arrow" size="sm"></fa-icon>
-          </mat-icon>
-          <a matLine #navigation>{{ 'labels.menus.Navigation' | translate }}</a>
-        </mat-list-item>
-        <mat-list-item
-          [routerLink]="['/checker-inbox-and-tasks/checker-inbox']"
-          [matTooltipPosition]="tooltipPosition"
-          matTooltip="{{ 'tooltips.Checker Inbox and Tasks' | translate }}"
-          routerLinkActive="active-menu"
-          [routerLinkActiveOptions]="{ exact: false }"
-        >
-          <mat-icon matListIcon>
-            <i class="fa fa-check"></i>
-          </mat-icon>
-          <a matLine>{{ 'labels.menus.Checker Inbox and Tasks' | translate }}</a>
-        </mat-list-item>
-        <mat-list-item
-          [routerLink]="['/collections/collection-sheet']"
-          [matTooltipPosition]="tooltipPosition"
-          matTooltip="{{ 'labels.menus.Collection Sheet' | translate }}"
-          routerLinkActive="active-menu"
-          [routerLinkActiveOptions]="{ exact: false }"
-        >
-          <mat-icon matListIcon>
-            <i class="fa fa-tasks"></i>
-          </mat-icon>
-          <a matLine>{{ 'labels.menus.Collection Sheet' | translate }}</a>
-        </mat-list-item>
-        <mat-list-item
-          [routerLink]="['/collections/individual-collection-sheet']"
-          [matTooltipPosition]="tooltipPosition"
-          matTooltip="{{ 'tooltips.Individual Collection Sheet' | translate }}"
-          routerLinkActive="active-menu"
-          [routerLinkActiveOptions]="{ exact: false }"
-        >
-          <mat-icon matListIcon>
-            <i class="fa fa-tasks"></i>
-          </mat-icon>
-          <a matLine>{{ 'labels.menus.Individual Collection Sheet' | translate }}</a>
-        </mat-list-item>
-        <mat-list-item
-          [routerLink]="['/notifications']"
-          [matTooltipPosition]="tooltipPosition"
-          matTooltip="{{ 'tooltips.Notifications' | translate }}"
-          routerLinkActive="active-menu"
-          [routerLinkActiveOptions]="{ exact: false }"
-        >
-          <mat-icon matListIcon>
-            <fa-icon icon="bell" size="sm"></fa-icon>
-          </mat-icon>
-          <a matLine>{{ 'labels.menus.Notifications' | translate }}</a>
-        </mat-list-item>
-        <mat-list-item
-          [routerLink]="['/accounting/journal-entries/frequent-postings']"
-          [matTooltipPosition]="tooltipPosition"
-          matTooltip="{{ 'tooltips.Frequent Postings' | translate }}"
-          routerLinkActive="active-menu"
-          [routerLinkActiveOptions]="{ exact: false }"
-        >
-          <mat-icon matListIcon>
-            <fa-icon icon="sync" size="sm"></fa-icon>
-          </mat-icon>
-          <a matLine #frequentPostings>{{ 'labels.menus.Frequent Postings' | translate }}</a>
-        </mat-list-item>
-        <mat-list-item
-          [routerLink]="['/accounting/journal-entries/create']"
-          [matTooltipPosition]="tooltipPosition"
-          matTooltip="{{ 'tooltips.Create Journal Entry' | translate }}"
-          routerLinkActive="active-menu"
-          [routerLinkActiveOptions]="{ exact: false }"
-        >
-          <mat-icon matListIcon>
-            <fa-icon icon="plus" size="sm"></fa-icon>
-          </mat-icon>
-          <a matLine #createJournalEntry>{{ 'labels.menus.Create Journal Entry' | translate }}</a>
-        </mat-list-item>
-        <mat-list-item
-          [routerLink]="['/accounting/chart-of-accounts']"
-          [matTooltipPosition]="tooltipPosition"
-          matTooltip="{{ 'tooltips.Chart Of Accounts' | translate }}"
-          routerLinkActive="active-menu"
-          [routerLinkActiveOptions]="{ exact: false }"
-        >
-          <mat-icon matListIcon>
-            <fa-icon icon="sitemap" size="sm"></fa-icon>
-          </mat-icon>
-          <a matLine #chartOfAccounts>{{ 'labels.menus.Chart of Accounts' | translate }}</a>
-        </mat-list-item>
-        <mat-list-item
-          (click)="showKeyboardShortcuts()"
-          [matTooltipPosition]="tooltipPosition"
-          matTooltip="{{ 'tooltips.Keyboard Shortcuts' | translate }}"
-        >
-          <mat-icon matListIcon>
-            <fa-icon icon="keyboard" size="sm"></fa-icon>
-          </mat-icon>
-          <a matLine>{{ 'labels.menus.Keyboard Shortcuts' | translate }}</a>
-        </mat-list-item>
-        <mat-list-item [matTooltipPosition]="tooltipPosition" matTooltip="{{ 'tooltips.Help' | translate }}">
-          <mat-icon matListIcon (click)="help()">
-            <fa-icon icon="question-circle" size="sm"></fa-icon>
-          </mat-icon>
-          <a matLine>{{ 'labels.menus.Help' | translate }}</a>
-        </mat-list-item>
-      </mat-nav-list>
+          @if (isExpanded(group.id) || sidenavCollapsed) {
+            <mat-nav-list>
+              @for (item of group.items; track item.id) {
+                @if (item.route) {
+                  <mat-list-item
+                    [id]="'sidenav-item-' + item.id"
+                    [routerLink]="[item.route]"
+                    [matTooltipPosition]="tooltipPosition"
+                    matTooltip="{{ 'labels.menus.' + item.label | translate }}"
+                    routerLinkActive="active-menu"
+                    [routerLinkActiveOptions]="{ exact: item.route === '/reports' }"
+                  >
+                    <mat-icon matListIcon>
+                      <fa-icon [icon]="item.icon" size="sm"></fa-icon>
+                    </mat-icon>
+                    <a matLine>{{ 'labels.menus.' + item.label | translate }}</a>
+                  </mat-list-item>
+                } @else {
+                  <mat-list-item
+                    [id]="'sidenav-item-' + item.id"
+                    (click)="runAction(item.action)"
+                    [matTooltipPosition]="tooltipPosition"
+                    matTooltip="{{ 'labels.menus.' + item.label | translate }}"
+                  >
+                    <mat-icon matListIcon>
+                      <fa-icon [icon]="item.icon" size="sm"></fa-icon>
+                    </mat-icon>
+                    <a matLine>{{ 'labels.menus.' + item.label | translate }}</a>
+                  </mat-list-item>
+                }
+              }
+            </mat-nav-list>
+          }
+        </div>
+      }
     </div>
   </div>
 </div>
@@ -250,7 +183,7 @@
     <button
       mat-raised-button
       color="primary"
-      (click)="popover.close(); showPopover(templateDashboard, dashboard, 'bottom', true)"
+      (click)="popover.close(); showPopoverById(templateDashboard, 'dashboard', 'bottom')"
     >
       {{ 'labels.buttons.Next' | translate }}
     </button>
@@ -274,7 +207,7 @@
     <button
       mat-raised-button
       color="primary"
-      (click)="popover.close(); showPopover(templateNavigation, navigation, 'bottom', true)"
+      (click)="popover.close(); showPopoverById(templateNavigation, 'navigation', 'bottom')"
     >
       {{ 'labels.buttons.Next' | translate }}
     </button>
@@ -291,14 +224,14 @@
     <button
       mat-raised-button
       color="primary"
-      (click)="popover.close(); showPopover(templateDashboard, dashboard, 'bottom', true)"
+      (click)="popover.close(); showPopoverById(templateDashboard, 'dashboard', 'bottom')"
     >
       {{ 'labels.buttons.Back' | translate }}
     </button>
     <button
       mat-raised-button
       color="primary"
-      (click)="popover.close(); showPopover(templateFrequentPostings, frequentPostings, 'top', true)"
+      (click)="popover.close(); showPopoverById(templateFrequentPostings, 'frequent-postings', 'top')"
     >
       {{ 'labels.buttons.Next' | translate }}
     </button>
@@ -315,14 +248,14 @@
     <button
       mat-raised-button
       color="primary"
-      (click)="popover.close(); showPopover(templateNavigation, navigation, 'bottom', true)"
+      (click)="popover.close(); showPopoverById(templateNavigation, 'navigation', 'bottom')"
     >
       {{ 'labels.buttons.Back' | translate }}
     </button>
     <button
       mat-raised-button
       color="primary"
-      (click)="popover.close(); showPopover(templateCreateJournalEntry, createJournalEntry, 'top', true)"
+      (click)="popover.close(); showPopoverById(templateCreateJournalEntry, 'create-journal-entry', 'top')"
     >
       {{ 'labels.buttons.Next' | translate }}
     </button>
@@ -339,14 +272,14 @@
     <button
       mat-raised-button
       color="primary"
-      (click)="popover.close(); showPopover(templateFrequentPostings, frequentPostings, 'top', true)"
+      (click)="popover.close(); showPopoverById(templateFrequentPostings, 'frequent-postings', 'top')"
     >
       {{ 'labels.buttons.Back' | translate }}
     </button>
     <button
       mat-raised-button
       color="primary"
-      (click)="popover.close(); showPopover(templateChartOfAccounts, chartOfAccounts, 'top', true)"
+      (click)="popover.close(); showPopoverById(templateChartOfAccounts, 'chart-of-accounts', 'top')"
     >
       {{ 'labels.buttons.Next' | translate }}
     </button>
@@ -363,7 +296,7 @@
     <button
       mat-raised-button
       color="primary"
-      (click)="popover.close(); showPopover(templateCreateJournalEntry, createJournalEntry, 'top', true)"
+      (click)="popover.close(); showPopoverById(templateCreateJournalEntry, 'create-journal-entry', 'top')"
     >
       {{ 'labels.buttons.Back' | translate }}
     </button>

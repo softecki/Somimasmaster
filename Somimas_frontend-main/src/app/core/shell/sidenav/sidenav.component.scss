@@ -5,6 +5,7 @@
     height: 100%;
     padding-top: 20%;
     overflow-x: hidden;
+    overflow-y: auto;
   }
 
   img {
@@ -115,6 +116,35 @@
     .nav-item-sep {
       padding: 0;
       margin: 1rem 0;
+    }
+
+    .nav-group-header {
+      cursor: pointer;
+      user-select: none;
+      outline: none;
+
+      span {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-right: 16px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .nav-group-chevron {
+        opacity: 0.6;
+      }
+
+      &:hover span {
+        opacity: 0.85;
+      }
+    }
+
+    .nav-group {
+      .nav-item-sep {
+        margin: 0.75rem 0 0.25rem;
+      }
     }
 
     .mat-nav-list {
