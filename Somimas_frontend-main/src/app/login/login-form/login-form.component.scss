@@ -1,37 +1,46 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
 #login-form {
+  width: 100%;
+
   .login-input {
-    width: 14rem;
-    margin-bottom: 0.1rem;
+    width: 100%;
+    margin-bottom: 0.25rem;
   }
 
   [matPrefix] fa-icon {
+    margin: 0 0.5rem;
     font-size: 16px;
-    position: absolute;
-    top: 50%;
-    left: 190px;
-    transform: translateY(-50%);
+    color: #2e7d32;
   }
 
   .login-button-first {
-    width: 14rem;
-    margin-top: 0.8rem;
+    width: 100%;
+    height: 46px;
+    margin-top: 0.75rem;
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #fff;
     background-color: #2e7d32;
-    color: white;
-    border-radius: 8px;
-    margin-bottom: 0.5rem;
+    border-radius: 10px;
+
+    &:hover:not([disabled]) {
+      background-color: #1b5e20;
+    }
+
+    &[disabled] {
+      opacity: 0.65;
+    }
   }
 
   mat-spinner {
-    float: right;
-    margin: 0.5rem 0;
+    display: inline-block;
+    margin-left: 0.5rem;
+    vertical-align: middle;
   }
-}
-
-::ng-deep .mat-mdc-form-field-infix {
-  width: 144px !important;
-}
-
-.container-margin {
-  margin-top: 8rem;
-  margin-bottom: 8rem;
 }

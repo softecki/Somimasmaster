@@ -1,79 +1,69 @@
-<!-- The viewport is divided into two parts having max-width 70% and 30% -->
-<div class="layout-row">
-  <!--
-  Content in 70%: (TODO: Allow customization by organization)
-  Cover Image
-  Organization/Application Name
-  Organization/Application Description
-
-  This content will be hidden for smaller screens.
-  -->
-
-  <div class="flex-70 layout-column align-center align-items-center hide-lt-sm cover">
-    <div class="cover-content">
-      <h1 class="mat-display-1 cover-title">{{ 'APP_NAME' | translate }}</h1>
-      <p class="mat-headline cover-description">
-        Softecki Microfinance Management System &mdash; the core banking system for running microfinance institutions.
-      </p>
-    </div>
+<div class="login-page">
+  <!-- Settings bar: server / theme / language -->
+  <div class="settings-bar">
+    @if (allowServerSwitch()) {
+      <mifosx-server-selector></mifosx-server-selector>
+    }
+    <mifosx-theme-toggle></mifosx-theme-toggle>
+    <mifosx-language-selector></mifosx-language-selector>
   </div>
 
-  <!--
-      Content in 30%: (TODO: Allow customization of Name, Logo and Contact Information by organization)
-      Language Selector
-      Organization/Application Name with Logo
-      Form
-      Contact Information/Resources
-      Footer
-      -->
+  <!-- Centered content -->
+  <div class="login-content">
+    <!-- Login card -->
+    <div class="login-card">
+      <img [src]="logoPath" (error)="onLogoError()" alt="{{ 'APP_NAME' | translate }} Logo" class="login-logo" />
+      <h1 class="login-title">{{ 'APP_NAME' | translate }}</h1>
+      <p class="login-subtitle">Softecki Microfinance Management System</p>
 
-  <div class="layout-column flex-gt-sm-30 login-container">
-    <!-- Language Selector to the extreme right -->
-    <div class="layout-row-reverse">
-      <mifosx-language-selector class="p-t-10 p-r-10 width-40"></mifosx-language-selector>
-      <mifosx-theme-toggle class="p-t-10"></mifosx-theme-toggle>
-      @if (allowServerSwitch()) {
-        <mifosx-server-selector class="p-t-10"></mifosx-server-selector>
-      }
-    </div>
-
-    <!-- Logo with Organization Name -->
-    <div class="layout-row align-center-center flex-auto">
-      <img [src]="logoPath" (error)="onLogoError()" alt="{{ 'APP_NAME' | translate }} Logo" class="img-container" />
-    </div>
-
-    <!-- Form Section -->
-    <div class="layout-column align-center-center">
-      <!-- Tenant Identifier Name -->
       @if (displayTenantSelector()) {
         <mifosx-tenant-selector></mifosx-tenant-selector>
       }
 
-      <!--
-          Type of Form:
-          Login
-          Reset Password
-          Two Factor Authentication
-          -->
       @if (!resetPassword && !twoFactorAuthenticationRequired) {
         <mifosx-login-form></mifosx-login-form>
       }
+      @if (resetPassword) {
+        <mifosx-reset-password></mifosx-reset-password>
+      }
+      @if (twoFactorAuthenticationRequired) {
+        <mifosx-two-factor-authentication></mifosx-two-factor-authentication>
+      }
+    </div>
 
-      <div class="layout-row">
-        @if (resetPassword) {
-          <mifosx-reset-password></mifosx-reset-password>
-        }
-        @if (twoFactorAuthenticationRequired) {
-          <mifosx-two-factor-authentication></mifosx-two-factor-authentication>
-        }
+    <!-- About SOMIMAS -->
+    <div class="about-somimas">
+      <p class="about-lead">
+        SOMIMAS is the core banking system for running microfinance institutions. Built by Softecki, it gives SACCOs,
+        micro-lenders, and community banks a single secure platform to manage their entire operation &mdash; from
+        client onboarding to loans, savings, accounting, and reporting.
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature">
+          <h3>Clients &amp; Groups</h3>
+          <p>Register and manage clients, groups, and centers with complete records, documents, and KYC details.</p>
+        </div>
+        <div class="feature">
+          <h3>Loan Management</h3>
+          <p>Handle the full loan cycle: product setup, application, approval, disbursement, repayments, and arrears.</p>
+        </div>
+        <div class="feature">
+          <h3>Savings &amp; Deposits</h3>
+          <p>Run savings accounts, fixed and recurring deposits, and share accounts with automated interest posting.</p>
+        </div>
+        <div class="feature">
+          <h3>Accounting &amp; Reports</h3>
+          <p>Full double-entry accounting with a chart of accounts, portfolio monitoring, and detailed reports.</p>
+        </div>
       </div>
     </div>
+  </div>
 
-    <!-- Footer -->
-    <mifosx-footer [styleClass]="'m-t-90'"></mifosx-footer>
+  <!-- Footer -->
+  <mifosx-footer [styleClass]="'m-t-20'"></mifosx-footer>
 
-    <div class="layout-row m-b-20 m-r-10" align="end">
-      <a (click)="reloadSettings()"><fa-icon icon="refresh"></fa-icon></a>
-    </div>
+  <div class="reload-row">
+    <a (click)="reloadSettings()"><fa-icon icon="refresh"></fa-icon></a>
   </div>
 </div>
