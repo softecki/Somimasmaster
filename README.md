@@ -350,7 +350,47 @@ bash deployment/native-vps/deploy-from-git.sh \
 
 Health-check failures are logged with recent service/application logs but do not automatically roll back the release. Rollback remains an explicit operator decision.
 
-### 7. Deploy prebuilt artifacts
+### 7. Fast incremental deployments
+
+For routine updates, rebuild only the part that changed. Both fast-path scripts pull `origin/main` automatically.
+
+Frontend-only changes (UI, branding, translations, themes, and styles):
+
+```bash
+cd /srv/somimas/app
+bash deployment/native-vps/deploy-frontend.sh \
+  --repo-dir /srv/somimas/app \
+  --branch main \
+  --app-domain microfinance.softecki.com
+```
+
+This builds and switches only the Angular release, skips `npm ci` when dependencies are unchanged, reloads Nginx, and does not rebuild or restart either Java service.
+
+Backend-only changes (Fineract, SaaS bridge, or control plane):
+
+```bash
+cd /srv/somimas/app
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+export PATH="$JAVA_HOME/bin:$PATH"
+
+bash deployment/native-vps/deploy-backend.sh \
+  --repo-dir /srv/somimas/app \
+  --branch main \
+  --app-domain microfinance.softecki.com
+```
+
+This uses the Gradle build cache, deploys only the Java JARs, restarts the Java services, and leaves the frontend unchanged.
+
+Use the full `deploy-from-git.sh` command when:
+
+- Both frontend and backend changed.
+- Dependencies or lockfiles changed.
+- Nginx, systemd, or deployment templates changed.
+- Performing the first deployment after adding these fast-path scripts.
+
+Pass `--no-pull` to either fast-path script only when the desired commit is already checked out on the VPS. After frontend changes, use `Ctrl+Shift+R` to bypass cached browser assets.
+
+### 8. Deploy prebuilt artifacts
 
 ```bash
 sudo /opt/somimas/scripts/deploy.sh \
