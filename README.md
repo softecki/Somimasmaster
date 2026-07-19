@@ -9,6 +9,7 @@ Production URL: `https://microfinance.softecki.com`
 - [Architecture](#architecture)
 - [Repository structure](#repository-structure)
 - [Main features](#main-features)
+- [SaaS APIs and frontend routes](#saas-apis-and-frontend-routes)
 - [Requirements](#requirements)
 - [Local development](#local-development)
 - [Production deployment](#production-deployment)
@@ -91,6 +92,63 @@ The detailed VPS runbook is also available at [deployment/native-vps/README.md](
 - Manual bank-deposit receipt storage.
 - Atomic backend/frontend releases with symlink switching.
 - Automated backups, restore, log rotation, TLS, firewall rules, and service health checks.
+
+## SaaS APIs and frontend routes
+
+### Control plane (`/saas-api`)
+
+Public:
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/public/signup` | Register a SaaS user |
+| `POST` | `/public/login` | Issue a SaaS JWT |
+| `GET` | `/public/plans` | List published plans |
+
+Authenticated organization and billing:
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/organizations` | List organizations for the current user |
+| `GET` | `/organizations/{id}` | Organization details |
+| `GET` | `/organizations/{id}/provisioning` | Tenant provisioning status |
+| `GET` | `/organizations/{id}/subscription` | Current subscription |
+| `GET` | `/organizations/{id}/invoices` | Invoices |
+| `POST` | `/organizations/{id}/payments/checkout-session` | Start a payment session |
+| `POST` | `/organizations/{id}/bank-deposits` | Submit a bank-deposit receipt |
+
+Webhooks and platform administration:
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/webhooks/flutterwave` | Flutterwave webhook |
+| `/platform/**` | organization list, suspend/reactivate, pending-deposit review | Platform-admin operations |
+
+### Fineract SaaS bridge (`/fineract-provider/internal/saas`)
+
+Protected by `X-Somimas-Bridge-Token` and blocked from the public internet by Nginx:
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/internal/saas/tenants` | Provision a tenant DB and register it |
+| `GET` | `/internal/saas/tenants/status/{identifier}` | Provisioning status |
+| `POST` | `/internal/saas/tenants/{identifier}/access-state` | Set `ACTIVE` or `SUSPENDED` |
+
+Provisioning creates `somimas_<slug>`, a tenant DB user, a Fineract registry row, encrypted credentials, and Liquibase migrations. Suspended tenants are denied operational API access by the bridge filter.
+
+### Frontend SaaS routes (hash routing)
+
+| Route | Purpose |
+|---|---|
+| `/#/saas` | Landing and plans |
+| `/#/saas/signup` | SaaS registration |
+| `/#/saas/login` | SaaS login |
+| `/#/saas/organizations` | Organization list |
+| `/#/saas/organizations/:id/billing` | Invoices and payments |
+| `/#/saas/organizations/:id/provisioning` | Provisioning progress |
+| `/#/saas/platform` | Platform-admin console |
+
+Operational microfinance login remains the standard Mifos/Fineract login page and uses the Fineract tenant API, not the SaaS JWT.
 
 ## Requirements
 
@@ -649,15 +707,25 @@ sudo nginx -t
 
 ## Security and known limitations
 
+### Security baseline
+
 - Rotate all database passwords, bridge tokens, and JWT secrets that have appeared in Git history or terminal transcripts.
 - Never expose ports 8080, 8090, or 3306 publicly.
 - Keep `/etc/somimas/*.env` readable only by `root` and the `somimas` group.
 - Replace or disable default Fineract credentials before production use.
 - Test backups by restoring them into staging.
 - Flutterwave keys are optional until payment integration is enabled; never commit live keys.
+
+### Current product limitations
+
 - SaaS control-plane identities and Fineract operational users are separate authentication domains.
-- Automatic creation of a Fineract tenant administrator during SaaS signup may require additional integration depending on the enabled rollout phase.
+- Automatic seeding of a Fineract tenant administrator during SaaS signup is not complete; operators still use the Fineract/Mifos login for core banking work after a tenant exists.
+- Entitlement enforcement currently defaults to report-only mode and uses a small hard-coded route allowlist.
+- Frontend organization/billing/provisioning pages do not yet use strong route guards; platform admin performs a component-level role check.
+- Flutterwave checkout currently constructs a hosted URL locally and does not fully create or verify checkout sessions through Flutterwave's API until that integration is finished.
+- Payment webhook matching is intentionally conservative and should be hardened further before high-volume billing.
 - An application rollback does not undo database migrations.
+- Current SaaS provisioning SQL assumes MariaDB; PostgreSQL is not the production target for the bridge.
 
 ## Verification
 
